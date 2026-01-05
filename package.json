@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:web": "vite --config vite.config.web.ts",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -16,6 +17,7 @@
     "@tanstack/react-virtual": "^3.13.14",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
+    "hls.js": "^1.6.15",
     "lucide-react": "^0.562.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

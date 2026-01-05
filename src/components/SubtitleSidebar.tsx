@@ -13,6 +13,9 @@ interface SubtitleSidebarProps {
     onSeek: (time: number) => void;
     targetLanguage: string;
     onTargetLanguageChange: (lang: string) => void;
+    showTranslation: boolean;
+    onShowTranslationChange: (show: boolean) => void;
+    isTranslating?: boolean;
     mediaId?: string;
     sourceLanguage?: string;
 }
@@ -25,6 +28,9 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
     onSeek,
     targetLanguage,
     onTargetLanguageChange,
+    showTranslation,
+    onShowTranslationChange,
+    isTranslating,
     mediaId,
     sourceLanguage
 }) => {
@@ -100,7 +106,7 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
     const clearSelection = () => setSelection(null);
 
     // Simple tokenization for demo
-    const renderTextWithPopovers = (text: string, context: string, startTime: number) => {
+    const renderTextWithPopovers = (text: string, context: string, startTime: number, translation?: string) => {
         return text.split(' ').map((word, i) => {
             // Clean punctuation for better matching?
             // For now, pass raw word, let backend handle or user selecting cleaner text usually better
@@ -113,6 +119,7 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
                     mediaId={mediaId}
                     currentTime={startTime}
                     sourceLanguage={sourceLanguage}
+                    segmentTranslation={translation}
                 >
                     {word}{' '}
                 </WordPopover>
@@ -202,6 +209,14 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
                             <option key={lang} value={lang}>{lang}</option>
                         ))}
                     </select>
+                    <button
+                        className={`translation-toggle ${showTranslation ? 'active' : ''} ${isTranslating ? 'loading' : ''}`}
+                        onClick={() => onShowTranslationChange(!showTranslation)}
+                        title={isTranslating ? 'Translating...' : (showTranslation ? 'Hide translation' : 'Show translation')}
+                        disabled={isTranslating}
+                    >
+                        {isTranslating ? '⏳' : '🌐'}
+                    </button>
                 </div>
             </div>
 
@@ -254,9 +269,9 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
                                             {formatTime(segment.start_time)}
                                         </div>
                                         <div className="segment-text">
-                                            {renderTextWithPopovers(segment.text, segment.text, segment.start_time)}
+                                            {renderTextWithPopovers(segment.text, segment.text, segment.start_time, segment.translation)}
                                         </div>
-                                        {segment.translation && (
+                                        {showTranslation && segment.translation && (
                                             <div className="segment-translation">
                                                 {segment.translation}
                                             </div>

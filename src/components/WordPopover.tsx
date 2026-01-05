@@ -12,10 +12,11 @@ interface WordPopoverProps {
     currentTime?: number;
     children: React.ReactNode;
     sourceLanguage?: string;
+    segmentTranslation?: string;  // If available, enables faster lookup
 }
 
 const WordPopover: React.FC<WordPopoverProps> = ({
-    word, context, targetLanguage, mediaId, currentTime, children, sourceLanguage
+    word, context, targetLanguage, mediaId, currentTime, children, sourceLanguage, segmentTranslation
 }) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -31,7 +32,8 @@ const WordPopover: React.FC<WordPopoverProps> = ({
         setIsSaved(false); // Reset saved state on new lookup
         try {
             // Use API to lookup word context
-            const result = await api.lookupWord(word, context, targetLanguage);
+            // Pass segmentTranslation if available for faster lookup
+            const result = await api.lookupWord(word, context, targetLanguage, segmentTranslation);
             setData(result);
         } catch (err: any) {
             console.error("Lookup failed:", err);

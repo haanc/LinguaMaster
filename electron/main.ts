@@ -87,7 +87,10 @@ function handleIpc() {
 }
 
 function startPythonBackend() {
-  const isDev = VITE_DEV_SERVER_URL != null
+  // Check multiple indicators for dev mode
+  const isDev = VITE_DEV_SERVER_URL != null ||
+                process.env.NODE_ENV === 'development' ||
+                !app.isPackaged
 
   if (isDev) {
     console.log('Dev mode detected: Skipping auto-spawn of Python backend. Please ensure backend is running manually.')
@@ -121,17 +124,35 @@ function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
+      webSecurity: false, // Allow cross-origin requests in dev mode
     },
   })
+
+  // Open DevTools in dev mode for debugging
+  if (!app.isPackaged) {
+    win.webContents.openDevTools()
+  }
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
 
+  // In dev mode, load from Vite dev server
+  // vite-plugin-electron sets VITE_DEV_SERVER_URL automatically
+  console.log('VITE_DEV_SERVER_URL:', VITE_DEV_SERVER_URL)
+  console.log('app.isPackaged:', app.isPackaged)
+
   if (VITE_DEV_SERVER_URL) {
+    console.log('Loading from VITE_DEV_SERVER_URL:', VITE_DEV_SERVER_URL)
     win.loadURL(VITE_DEV_SERVER_URL)
+  } else if (!app.isPackaged) {
+    // Fallback: load directly from localhost:5173
+    const devUrl = 'http://localhost:5173'
+    console.log('Fallback: Loading from', devUrl)
+    win.loadURL(devUrl)
   } else {
+    console.log('Production: Loading from dist')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 }

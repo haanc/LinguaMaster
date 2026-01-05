@@ -38,28 +38,69 @@ def get_current_owner(x_owner_id: str = Header(default="guest")) -> str:
     return x_owner_id
 
 from fastapi import Response
+from fastapi.responses import RedirectResponse
+
+@app.get("/media/stream-url")
+async def get_stream_url(url: str):
+    """Resolve a video URL to a direct stream URL (for HLS.js or direct playback)."""
+    print(f"DEBUG: Resolving stream URL for: {url[:100]}...", flush=True)
+
+    try:
+        # Use media_service which uses yt-dlp Python library (more reliable)
+        metadata = media_service.fetch_metadata(url)
+        stream_url = metadata.get('url')
+
+        if stream_url:
+            print(f"DEBUG: Resolved stream URL successfully", flush=True)
+            return {"stream_url": stream_url}
+        else:
+            print(f"WARN: No stream URL in metadata", flush=True)
+            return {"stream_url": url}
+
+    except Exception as e:
+        print(f"ERROR: Failed to resolve stream URL: {e}", flush=True)
+        return {"stream_url": url}
+
 
 @app.get("/media/proxy")
 async def proxy_video(url: str, request: Request):
     """Proxy video stream, resolving YouTube URLs and forwarding Range headers."""
-    
+    import asyncio # Ensure asyncio is available
+
     print(f"DEBUG: Proxy request for URL: {url[:100]}...", flush=True)
     target_url = url
-    
+
     # 1. Resolve direct stream if needed
     if "youtube.com/watch" in url or "youtu.be" in url or "bilibili.com/video" in url:
         print(f"DEBUG: Attempting to resolve direct stream for {url}", flush=True)
         try:
-            import subprocess
-            cmd = ["yt-dlp", "-g", "-f", "best[ext=mp4][protocol^=http]/best[protocol^=http]", url]
-            process = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            candidate = process.stdout.strip().split('\n')[0]
-            
-            if candidate and candidate.startswith('http'):
-                target_url = candidate
-                print(f"DEBUG: Resolved Successfully via yt-dlp: {target_url[:50]}...", flush=True)
+            # Use simpler format selector - 'b' for best pre-merged format
+            # This avoids HLS/DASH streams that browsers can't directly play
+            cmd_args = [
+                "yt-dlp",
+                "-g",
+                "-f", "b",  # Best pre-merged format (video+audio in single file)
+                url
+            ]
+
+            # Use asyncio to run subprocess without blocking the event loop
+            proc = await asyncio.create_subprocess_exec(
+                *cmd_args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await proc.communicate()
+
+            if proc.returncode == 0:
+                candidate = stdout.decode().strip().split('\n')[0]
+                if candidate and candidate.startswith('http'):
+                    target_url = candidate
+                    print(f"DEBUG: Resolved Successfully via yt-dlp: {target_url[:80]}...", flush=True)
+                else:
+                    print(f"WARN: yt-dlp ran but returned no http link. Output: {stdout}", flush=True)
             else:
-                print(f"WARN: yt-dlp ran but returned no http link. Stdout: {process.stdout}", flush=True)
+                print(f"WARN: yt-dlp failed. Stderr: {stderr.decode()}", flush=True)
+
         except Exception as e:
             print(f"WARN: Failed to resolve stream URL: {e}. Falling back to original.", flush=True)
 
@@ -80,85 +121,46 @@ async def proxy_video(url: str, request: Request):
     client = httpx.AsyncClient()
     try:
         # We need to manually manage the response to get headers BEFORE returning StreamingResponse
-        response = await client.request("GET", target_url, headers=headers, follow_redirects=True, timeout=30.0)
+        # Note: We must NOT use a 'with' block here effectively if we want to stream the response out,
+        # but httpx.stream() context manager is usually required.
+        # Alternatively, we can build a generator.
         
-        # Log upstream headers for debugging
-        print(f"DEBUG: Upstream Status: {response.status_code}", flush=True)
+        req = client.build_request("GET", target_url, headers=headers, timeout=30.0)
+        r = await client.send(req, stream=True)
         
+        if r.status_code >= 400:
+             print(f"DEBUG: Upstream Error Status: {r.status_code}", flush=True)
+             await r.aclose()
+             # Fallback or error?
+             return Response(status_code=r.status_code)
+
         # Forward specific headers needed for Range support
         forward_headers = {}
         for h in ["Content-Range", "Content-Length", "Accept-Ranges", "Content-Type"]:
-            if h in response.headers:
-                forward_headers[h] = response.headers[h]
+            if h in r.headers:
+                forward_headers[h] = r.headers[h]
         
-        # Ensure Content-Type is set
         media_type = forward_headers.get("Content-Type", "video/mp4")
         
-        # Note: We use response.aiter_bytes() to stream the content
+        # Generator to yield bytes and close client at end
+        async def stream_generator():
+            try:
+                async for chunk in r.aiter_bytes():
+                     yield chunk
+            finally:
+                await r.aclose()
+                await client.aclose()
+
         return StreamingResponse(
-            response.aiter_bytes(),
-            status_code=response.status_code,
+            stream_generator(),
+            status_code=r.status_code,
             headers=forward_headers,
             media_type=media_type
         )
     except Exception as e:
         print(f"ERROR: Proxy failed to connect to upstream: {str(e)}", flush=True)
         await client.aclose()
-        return StreamingResponse(iter([b""]), status_code=500)
-
-@app.post("/media/fetch-info")
-def fetch_media_info(request: URLRequest):
-    try:
-        return media_service.fetch_metadata(request.url)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.post("/media/download")
-def start_download(request: URLRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_session), owner_id: str = Depends(get_current_owner)):
-    try:
-        # Check for existing video with same URL and SAME OWNER (Deduplication)
-        statement = select(MediaSource).where(MediaSource.source_url == request.url).where(MediaSource.owner_id == owner_id)
-        existing_media = db.exec(statement).first()
-
-        if existing_media:
-            print(f"DEBUG: Found existing media {existing_media.id} for URL {request.url}. Overwriting.")
-            # Setup for re-download
-            media_id = existing_media.id
-            media = existing_media
-            
-            # Reset simple fields
-            media.status = 'downloading'
-            media.title = "Processing..." 
-            media.error_message = None
-            media.last_played_at = datetime.datetime.now()
-            
-            # Cleanup old file if exists
-            if media.file_path and os.path.exists(media.file_path):
-                try:
-                    os.remove(media.file_path)
-                    print(f"DEBUG: Deleted old file {media.file_path}")
-                except Exception as e:
-                    print(f"DEBUG: Failed to delete old file: {e}")
-            
-            db.add(media)
-            db.commit()
-            db.refresh(media)
-        else:
-            # Create a placeholder entry in DB
-            media = MediaSource(
-                title="Processing...",
-                source_url=request.url,
-                file_path="",
-                status="pending",
-                owner_id=owner_id
-            )
-            db.add(media)
-            db.commit()
-            db.refresh(media)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        return Response(status_code=500, content="Proxy Error")
 
 
 from database import engine
@@ -190,13 +192,19 @@ def background_download_and_process(url: str, media_id_str: str):
                 db.commit()
                 print(f"DEBUG: Updated metadata for {media.title}")
             except Exception as e:
-                print(f"WARN: Background metadata fetch failed: {e}")
                 # We continue, as download might still work
+                pass
+            
+            # CHECK CANCELLATION
+            if not db.get(MediaSource, media_id):
+                print(f"DEBUG: Task cancelled for {media_id}")
+                return
 
-            # 1. Download Video
-            print(f"DEBUG: Starting download for {media.id}...")
+            # 1. Download Audio ONLY
+            print(f"DEBUG: Starting audio download for {media.id}...")
             try:
-                local_path = media_service.download_video(url)
+                # Returns path to .mp3 directly
+                local_path = media_service.download_audio(url)
             except Exception as e:
                 media.status = 'error'
                 media.error_message = f"Download Failed: {str(e)}"
@@ -206,24 +214,22 @@ def background_download_and_process(url: str, media_id_str: str):
 
             # Update path
             media.file_path = local_path
-            media.status = 'processing_audio'
+            media.status = 'transcribing'
             db.add(media)
             db.commit()
             
-            print(f"DEBUG: Processing audio for media {media.id}...")
+            print(f"DEBUG: Audio ready: {local_path}")
             
-            # 2. Extract Audio
+            # 2. Transcribe with Whisper (No extraction needed)
             try:
-                audio_path = audio_service.extract_audio(local_path)
-                print(f"DEBUG: Audio extracted: {audio_path}")
-                
-                # 3. Transcribe with Whisper
-                media.status = 'transcribing'
-                db.add(media)
-                db.commit()
-                
                 print(f"DEBUG: Transcribing audio...")
-                segments_data = ai_service.transcribe_audio(audio_path)
+                # We can skip extraction step now
+                
+                # Check cancellation again before expensive transcribe
+                if not db.get(MediaSource, media_id):
+                     return
+
+                segments_data = ai_service.transcribe_audio(local_path)
                 print(f"DEBUG: Transcription complete. {len(segments_data)} segments.")
                 
                 # 4. Save Segments
@@ -282,6 +288,119 @@ def create_media(media: MediaSource, session: Session = Depends(get_session)):
     session.refresh(media)
     return media
 
+@app.post("/media/download", response_model=MediaSource)
+def download_media(
+    req: URLRequest,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session),
+    owner_id: str = Depends(get_current_owner)
+):
+    """
+    Start a background download and processing job for a URL.
+    Creates a placeholder MediaSource entry immediately, then processes in background.
+    """
+    url = req.url
+
+    # Create placeholder entry
+    media = MediaSource(
+        id=uuid4(),
+        title="Importing...",
+        source_url=url,
+        status="downloading",
+        owner_id=owner_id
+    )
+    session.add(media)
+    session.commit()
+    session.refresh(media)
+
+    # Queue background processing
+    background_tasks.add_task(background_download_and_process, url, str(media.id))
+
+    return media
+
+
+def background_transcribe_only(audio_path: str, media_id_str: str):
+    """
+    Transcribe audio only (for re-triggering stuck jobs).
+    """
+    media_id = UUID(media_id_str)
+
+    with Session(engine) as db:
+        try:
+            media = db.get(MediaSource, media_id)
+            if not media:
+                print(f"ERROR: Media {media_id} not found in transcribe task.")
+                return
+
+            print(f"DEBUG: Starting transcription for {audio_path}...")
+            media.status = 'transcribing'
+            db.add(media)
+            db.commit()
+
+            segments_data = ai_service.transcribe_audio(audio_path)
+            print(f"DEBUG: Transcription complete. {len(segments_data)} segments.")
+
+            # Save segments
+            for seg in segments_data:
+                db_seg = SubtitleSegment(
+                    media_id=media.id,
+                    index=seg['index'],
+                    start_time=seg['start_time'],
+                    end_time=seg['end_time'],
+                    text=seg['text']
+                )
+                db.add(db_seg)
+
+            media.status = 'ready'
+            db.add(media)
+            db.commit()
+            print(f"DEBUG: Media {media_id} transcription saved successfully!")
+
+        except Exception as e:
+            print(f"ERROR in transcribe task: {e}")
+            media = db.get(MediaSource, media_id)
+            if media:
+                media.status = 'error'
+                media.error_message = f"Transcription failed: {str(e)}"
+                db.add(media)
+                db.commit()
+
+@app.post("/media/{media_id}/retranscribe", response_model=MediaSource)
+def retranscribe_media(
+    media_id: UUID,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session)
+):
+    """
+    Manually re-trigger transcription for a stuck media.
+    Useful when background task was interrupted (e.g., server restart).
+    """
+    media = session.get(MediaSource, media_id)
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
+
+    if not media.file_path or not os.path.exists(media.file_path):
+        raise HTTPException(status_code=400, detail="Audio file not found. Please re-import the video.")
+
+    # Clear any existing segments
+    existing_segments = session.exec(
+        select(SubtitleSegment).where(SubtitleSegment.media_id == media_id)
+    ).all()
+    for seg in existing_segments:
+        session.delete(seg)
+
+    media.status = 'transcribing'
+    media.error_message = None
+    session.add(media)
+    session.commit()
+    session.refresh(media)
+
+    # Queue transcription
+    background_tasks.add_task(background_transcribe_only, media.file_path, str(media.id))
+
+    return media
+
+
 @app.delete("/media/{media_id}")
 def delete_media(media_id: UUID, session: Session = Depends(get_session)):
     media = session.get(MediaSource, media_id)
@@ -295,6 +414,17 @@ def delete_media(media_id: UUID, session: Session = Depends(get_session)):
             print(f"DEBUG: Deleted file {media.file_path}")
         except Exception as e:
             print(f"WARN: Failed to delete file {media.file_path}: {e}")
+
+    # Delete potential sidecar audio file (.mp3) if it exists (for robustness)
+    if media.file_path:
+        base, _ = os.path.splitext(media.file_path)
+        audio_sidecar = base + ".mp3"
+        if os.path.exists(audio_sidecar):
+            try:
+                os.remove(audio_sidecar)
+                print(f"DEBUG: Deleted sidecar audio {audio_sidecar}")
+            except Exception as e:
+                print(f"WARN: Failed to delete audio {audio_sidecar}: {e}")
             
     # Delete subtitles (if not configured for CASCADE, we delete manually)
     session.exec(select(SubtitleSegment).where(SubtitleSegment.media_id == media_id))
@@ -343,7 +473,8 @@ def create_segments(media_id: UUID, segments: List[SubtitleSegment], session: Se
 class LookupRequest(BaseModel):
     word: str
     context: str
-    target_language: str = "Chinese" # Default, or detect system locale in frontend
+    target_language: str = "Chinese"
+    sentence_translation: Optional[str] = None  # If provided, uses augmented (faster) lookup
 
 class ExplainRequest(BaseModel):
     text: str
@@ -356,7 +487,12 @@ class ChatRequest(BaseModel):
 
 @app.post("/ai/lookup-word")
 def lookup_word(req: LookupRequest):
-    return ai_service.lookup_word(req.word, req.context, req.target_language)
+    return ai_service.lookup_word(
+        req.word,
+        req.context,
+        req.target_language,
+        req.sentence_translation  # Pass translation context if available
+    )
 
 @app.post("/ai/explain")
 def explain_context(req: ExplainRequest):
@@ -365,6 +501,88 @@ def explain_context(req: ExplainRequest):
 @app.post("/ai/chat")
 def chat_tutor(req: ChatRequest):
     return ai_service.chat_with_tutor(req.messages, req.context, req.target_language)
+
+
+class TranslateSegmentsRequest(BaseModel):
+    segment_ids: List[str]
+    target_language: str = "Chinese"
+
+
+@app.post("/media/{media_id}/translate")
+def translate_segments(
+    media_id: UUID,
+    req: TranslateSegmentsRequest,
+    session: Session = Depends(get_session)
+):
+    """
+    Translate specified segments to target language.
+    Updates segments in database and returns translated segments.
+    """
+    # Get segments that need translation
+    segments = session.exec(
+        select(SubtitleSegment).where(
+            SubtitleSegment.media_id == media_id,
+            SubtitleSegment.id.in_([UUID(sid) for sid in req.segment_ids])
+        )
+    ).all()
+
+    if not segments:
+        raise HTTPException(status_code=404, detail="No segments found")
+
+    # Prepare texts for batch translation
+    texts = [seg.text for seg in segments]
+    batch_text = "\n---\n".join([f"[{i}] {t}" for i, t in enumerate(texts)])
+
+    try:
+        # Call AI for translation
+        if ai_service.is_azure:
+            deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT_CHAT", "gpt-5.2-chat")
+            response = ai_service.client.chat.completions.create(
+                model=deployment,
+                messages=[
+                    {"role": "system", "content": f"You are a translator. Translate each numbered subtitle segment to {req.target_language}. Keep the [number] prefix in your response. Only output translations, no explanations."},
+                    {"role": "user", "content": batch_text}
+                ]
+            )
+        else:
+            response = ai_service.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": f"You are a translator. Translate each numbered subtitle segment to {req.target_language}. Keep the [number] prefix in your response. Only output translations, no explanations."},
+                    {"role": "user", "content": batch_text}
+                ]
+            )
+
+        # Parse response
+        result_text = response.choices[0].message.content
+        translations = {}
+
+        for line in result_text.split('\n'):
+            line = line.strip()
+            if line.startswith('['):
+                try:
+                    idx_end = line.index(']')
+                    idx = int(line[1:idx_end])
+                    translation = line[idx_end+1:].strip()
+                    translations[idx] = translation
+                except:
+                    continue
+
+        # Update segments with translations
+        for i, seg in enumerate(segments):
+            if i in translations:
+                seg.translation = translations[i]
+                session.add(seg)
+
+        session.commit()
+
+        # Return updated segments
+        return [{"id": str(seg.id), "translation": seg.translation} for seg in segments]
+
+    except Exception as e:
+        print(f"ERROR in translate_segments: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # --- Saved Vocab / Notebook Endpoints ---
 

@@ -8,7 +8,7 @@ class MediaSource(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     title: str
     source_url: Optional[str] = Field(default=None, index=True)
-    file_path: str
+    file_path: Optional[str] = None
     duration: float = 0.0
     language: str = "en"
     # Status tracking for AI processing: pending, downloading, processing_audio, transcribing, ready, error

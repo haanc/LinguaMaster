@@ -125,11 +125,12 @@ export const api = {
 
     // --- AI Features ---
 
-    lookupWord: async (word: string, context: string, targetLanguage: string): Promise<VocabularyItem> => {
+    lookupWord: async (word: string, context: string, targetLanguage: string, sentenceTranslation?: string): Promise<VocabularyItem> => {
         const response = await axios.post(`${API_BASE_URL}/ai/lookup-word`, {
             word,
             context,
-            target_language: targetLanguage
+            target_language: targetLanguage,
+            sentence_translation: sentenceTranslation  // Pass translation if available for faster lookup
         });
         return response.data;
     },
@@ -152,6 +153,14 @@ export const api = {
         const response = await axios.post(`${API_BASE_URL}/ai/chat`, {
             messages: fullHistory,
             context: context,
+            target_language: targetLanguage
+        });
+        return response.data;
+    },
+
+    translateSegments: async (mediaId: string, segmentIds: string[], targetLanguage: string): Promise<{id: string, translation: string}[]> => {
+        const response = await axios.post(`${API_BASE_URL}/media/${mediaId}/translate`, {
+            segment_ids: segmentIds,
             target_language: targetLanguage
         });
         return response.data;

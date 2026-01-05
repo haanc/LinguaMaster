@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react'
+import Hls from 'hls.js'
 import { useMediaList, useSubtitleSegments } from './hooks/useMedia'
 import SubtitleSidebar from './components/SubtitleSidebar'
 import SubtitleOverlay from './components/SubtitleOverlay'
@@ -57,6 +58,8 @@ function App() {
   // App State
   const [view, setView] = useState<AppView>('library');
   const [targetLanguage, setTargetLanguage] = useState<string>("Chinese"); // Default
+  const [showTranslation, setShowTranslation] = useState<boolean>(false); // Dual subtitle toggle - default OFF
+  const [isTranslating, setIsTranslating] = useState<boolean>(false); // Translation loading state
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // Auth State
@@ -64,7 +67,64 @@ function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const { data: mediaList, isLoading, refetch } = useMediaList()
-  const { data: segments = [] } = useSubtitleSegments(currentMedia?.id || null)
+  const { data: segments = [], refetch: refetchSegments } = useSubtitleSegments(currentMedia?.id || null)
+
+  // Handle translation toggle - trigger translation when enabled
+  const handleShowTranslationChange = async (show: boolean) => {
+    setShowTranslation(show);
+
+    // If enabling translation and we have segments without translations
+    if (show && currentMedia?.id && segments.length > 0) {
+      // Check if any segments need translation
+      const needsTranslation = segments.filter(s => !s.translation);
+      if (needsTranslation.length > 0) {
+        setIsTranslating(true);
+        setMessage(`🌐 翻译中... (${needsTranslation.length} 条字幕)`);
+
+        try {
+          await api.translateSegments(
+            currentMedia.id,
+            needsTranslation.map(s => s.id),
+            targetLanguage
+          );
+          // Refetch segments to get translations
+          refetchSegments();
+          setMessage(`✅ 翻译完成`);
+        } catch (error: any) {
+          console.error('Translation error:', error);
+          setMessage(`❌ 翻译失败: ${error.message}`);
+        } finally {
+          setIsTranslating(false);
+        }
+      }
+    }
+  };
+
+  // Re-translate when target language changes (if translation is enabled)
+  const handleTargetLanguageChange = async (lang: string) => {
+    setTargetLanguage(lang);
+
+    // If translation is currently shown and we have segments, re-translate
+    if (showTranslation && currentMedia?.id && segments.length > 0) {
+      setIsTranslating(true);
+      setMessage(`🌐 正在翻译为 ${lang}...`);
+
+      try {
+        await api.translateSegments(
+          currentMedia.id,
+          segments.map(s => s.id),
+          lang
+        );
+        refetchSegments();
+        setMessage(`✅ 翻译完成`);
+      } catch (error: any) {
+        console.error('Translation error:', error);
+        setMessage(`❌ 翻译失败: ${error.message}`);
+      } finally {
+        setIsTranslating(false);
+      }
+    }
+  };
 
   // Check auth status on mount
   useEffect(() => {
@@ -117,6 +177,53 @@ function App() {
     }
   }, [videoPath]);
 
+  // HLS.js integration for m3u8 streams
+  const hlsRef = useRef<Hls | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoPath) return;
+
+    // Check if this is an HLS stream (m3u8)
+    const isHlsStream = videoPath.includes('.m3u8') || videoPath.includes('manifest');
+
+    if (isHlsStream && Hls.isSupported()) {
+      // Destroy previous HLS instance
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
+
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: false,
+      });
+      hlsRef.current = hls;
+
+      hls.loadSource(videoPath);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(e => console.log('Autoplay prevented:', e));
+      });
+
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          console.error('HLS fatal error:', data);
+          setMessage(`HLS Error: ${data.details}`);
+        }
+      });
+
+      return () => {
+        hls.destroy();
+        hlsRef.current = null;
+      };
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS support (Safari)
+      video.src = videoPath;
+    }
+    // For non-HLS streams, the video element handles it natively via src attribute
+  }, [videoPath]);
+
   const handleSelectVideo = async () => {
     // @ts-ignore
     const path = await window.ipcRenderer.invoke('open-file-dialog')
@@ -141,47 +248,63 @@ function App() {
       return;
     }
 
-    // If ready, play local file
+    // If ready, we can play.
+    // Logic update: Since we only download audio now, we prefer streaming VIDEO from proxy.
+    // If source_url exists, we prioritize proxy stream.
+    // If no source_url (local import), we play local file (which might be audio only now, but that's expected for local).
+
+    if (media.source_url) {
+      // Fetch the direct stream URL from backend
+      setMessage(`Resolving stream URL for: ${media.title}...`);
+      setCurrentMedia(media);
+
+      fetch(`http://localhost:8000/media/stream-url?url=${encodeURIComponent(media.source_url)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.stream_url) {
+            setVideoPath(data.stream_url);
+            setMessage(`Streaming: ${media.title}`);
+          } else {
+            setMessage(`Failed to resolve stream URL`);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to get stream URL:', err);
+          setMessage(`Error: ${err.message}`);
+        });
+      return;
+    }
+
+    // Fallback: Local File (Audio Only likely)
     if (media.status === 'ready' && media.file_path) {
       let path = media.file_path;
       if (!path.startsWith('http') && !path.startsWith('local-video')) {
         path = path.replace(/\\/g, '/');
-
-        // Check if we are in Electron
         // @ts-ignore
         const isElectron = window.ipcRenderer !== undefined;
-
         if (isElectron) {
           path = `local-video://${encodeURIComponent(path)}`;
         } else {
-          // If in Browser, use the static file server from backend
-          // Assuming path ends with "cache/filename.mp4" or is absolute
-          // We need to extract the filename relative to the cache dir
           const parts = path.split('/');
           const filename = parts[parts.length - 1];
           path = `http://localhost:8000/static/cache/${filename}`;
         }
       }
       setVideoPath(path);
-      console.log("Playing Path:", path);
-      setMessage(`Playing: ${media.title}`);
+      console.log("Playing Local Path:", path);
+      setMessage(`Playing Local (Audio): ${media.title}`);
+      setCurrentMedia(media);
+      return;
     }
-    // If ERROR, show the error message
-    else if (media.status === 'error') {
+
+    // ERROR handling
+    if (media.status === 'error') {
       setMessage(`❌ Error: ${media.error_message || 'Processing failed.'} Please delete and try again.`);
       return;
     }
-    // If NOT ready (Downloading/Processing), try to stream from source_url
-    else if (media.source_url) {
-      const proxyUrl = `http://127.0.0.1:8000/media/proxy?url=${encodeURIComponent(media.source_url)}`;
-      setVideoPath(proxyUrl);
-      setMessage(`Streaming (Processing...): ${media.title}`);
-    }
-    // Fallback if no source_url and not ready
-    else {
-      setMessage(`⏳ Video is ${media.status}... Please wait.`);
-      return;
-    }
+
+    // Processing check
+    setMessage(`⏳ Video is ${media.status}... Please wait.`);
 
     setCurrentMedia(media); // Set current media to fetch subtitles (might be empty initially)
   }
@@ -224,10 +347,6 @@ function App() {
       videoRef.current.currentTime = time
       videoRef.current.play()
     }
-  }
-
-  const handleOverlayClick = () => {
-    alert('Overlay Clicked! Core interaction verified.')
   }
 
   const handleDeleteVideo = async (mediaId: string) => {
@@ -359,7 +478,7 @@ function App() {
                       <video
                         key={videoPath} // Force remount on video change
                         ref={videoRef}
-                        src={videoPath}
+                        src={videoPath.includes('.m3u8') || videoPath.includes('manifest') ? undefined : videoPath}
                         controls
                         autoPlay // Auto-play when loaded
                         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
@@ -371,11 +490,10 @@ function App() {
                         className="main-video"
                       />
 
-                      <SubtitleOverlay text={activeSegment?.text || null} />
-
-                      <div onClick={handleOverlayClick} className="ai-overlay">
-                        ✨ AI Tutor
-                      </div>
+                      <SubtitleOverlay
+                        text={activeSegment?.text || null}
+                        translation={showTranslation ? activeSegment?.translation : undefined}
+                      />
                     </>
                   ) : view === 'notebook' ? (
                     <NotebookView />
@@ -401,7 +519,10 @@ function App() {
                   currentTime={currentTime}
                   onSeek={handleSeek}
                   targetLanguage={targetLanguage}
-                  onTargetLanguageChange={setTargetLanguage}
+                  onTargetLanguageChange={handleTargetLanguageChange}
+                  showTranslation={showTranslation}
+                  onShowTranslationChange={handleShowTranslationChange}
+                  isTranslating={isTranslating}
                   mediaId={currentMedia?.id}
                   sourceLanguage={currentMedia?.language}
                 />

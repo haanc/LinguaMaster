@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './TutorPanel.css';
@@ -34,7 +34,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({
     onSendMessage,
     isChatLoading
 }) => {
-    const [input, setInput] = React.useState("");
+    const [input, setInput] = useState("");
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -45,7 +45,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({
         scrollToBottom();
     }, [chatMessages, explanation]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!input.trim()) return;
         onSendMessage(input);
         setInput("");
@@ -60,10 +60,7 @@ const TutorPanel: React.FC<TutorPanelProps> = ({
 
     return (
         <div className="tutor-panel">
-            <div className="tutor-header">
-                <h3>✨ AI Tutor</h3>
-                <button className="close-btn" onClick={onClose}>×</button>
-            </div>
+            <button className="tutor-close-btn" onClick={onClose}>×</button>
 
             <div className="tutor-content">
                 {originalText && (
@@ -76,38 +73,30 @@ const TutorPanel: React.FC<TutorPanelProps> = ({
                 {loading && (
                     <div className="tutor-loading">
                         <div className="loading-spinner"></div>
-                        <p>Analyzing context, grammar, and culture...</p>
+                        <p>Analyzing context...</p>
                     </div>
                 )}
 
-                {error && (
-                    <div className="tutor-error">
-                        <p>{error}</p>
-                    </div>
-                )}
+                {error && <div className="tutor-error"><p>{error}</p></div>}
 
-                {/* Explanation Section (Always shown at top of chat sort of) */}
                 {explanation && !loading && (
                     <div className="explanation-container">
                         <div className="explanation-section">
                             <h4>Summary</h4>
                             <p>{explanation.summary}</p>
                         </div>
-
                         <div className="explanation-section">
-                            <h4>Grammar Notes</h4>
+                            <h4>Grammar</h4>
                             <p>{explanation.grammar_notes}</p>
                         </div>
-
                         <div className="explanation-section">
-                            <h4>Cultural Context</h4>
+                            <h4>Culture</h4>
                             <p>{explanation.cultural_notes}</p>
                         </div>
                         <hr className="divider" />
                     </div>
                 )}
 
-                {/* Chat History */}
                 <div className="chat-history">
                     {chatMessages.map((msg, idx) => (
                         <div key={idx} className={`chat-message ${msg.role}`}>
@@ -128,12 +117,11 @@ const TutorPanel: React.FC<TutorPanelProps> = ({
 
                 {!explanation && !loading && !error && chatMessages.length === 0 && (
                     <div className="tutor-empty">
-                        <p>Select a sentence to start chatting.</p>
+                        <p>Select a video sentence to start.</p>
                     </div>
                 )}
             </div>
 
-            {/* Chat Input */}
             <div className="chat-input-area">
                 <textarea
                     value={input}

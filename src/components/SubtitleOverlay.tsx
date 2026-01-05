@@ -4,14 +4,18 @@ import './SubtitleOverlay.css';
 
 interface SubtitleOverlayProps {
     text: string | null;
+    translation?: string;
 }
 
-const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({ text }) => {
+const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({ text, translation }) => {
     if (!text) return null;
 
     return (
         <div className="subtitle-overlay">
-            <p>{text}</p>
+            <p className="subtitle-source">{text}</p>
+            {translation && (
+                <p className="subtitle-translation">{translation}</p>
+            )}
         </div>
     );
 };
