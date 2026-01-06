@@ -1,5 +1,9 @@
 import axios from 'axios';
 
+// Import generated types from Python models
+import type { MediaSource, SubtitleSegment, SavedWord, MediaStatus } from '../types/generated';
+export type { MediaSource, SubtitleSegment, SavedWord, MediaStatus };
+
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // Add Interceptor to inject Owner ID
@@ -14,49 +18,31 @@ axios.interceptors.request.use((config) => {
     return config;
 });
 
-export interface MediaSource {
-    id: string;
-    title: string;
-    source_url?: string;
-    file_path: string;
-    duration: number;
-    language: string;
-    created_at: string;
-    last_played_at: string;
-    status: 'pending' | 'downloading' | 'processing_audio' | 'transcribing' | 'ready' | 'error' | 'cloud_only';
-    cover_image?: string;
-    error_message?: string;
+// AI-specific types (not in database models)
+export interface ChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
 }
 
-export interface SubtitleSegment {
-    id: string;
-    media_id: string;
-    index: number;
-    start_time: number;
-    end_time: number;
-    text: string;
-    translation?: string;
-    grammar_notes_json?: string;
+export interface VocabularyItem {
+    word: string;
+    definition: string;
+    pronunciation: string;
+    translation: string;
+    example_sentence: string;
 }
 
-export interface SavedWord {
-    id: string;
+// Input type for saving words (backend fills defaults for SRS fields)
+export interface SaveWordInput {
     word: string;
     context_sentence?: string;
     translation?: string;
     media_id?: string;
     media_time?: number;
-    created_at: string;
-    // SRS Fields
     language?: string;
-    next_review_at?: string;
-    interval?: number;
-    easiness_factor?: number; // Added missing field
-    repetitions?: number;
 }
 
 export const api = {
-    // ... existing methods ...
     listMedia: async (): Promise<MediaSource[]> => {
         const response = await axios.get(`${API_BASE_URL}/media`);
         return response.data;
@@ -108,7 +94,7 @@ export const api = {
         return response.data;
     },
 
-    saveWord: async (word: Omit<SavedWord, 'id' | 'created_at'>) => {
+    saveWord: async (word: SaveWordInput) => {
         const response = await axios.post(`${API_BASE_URL}/vocab`, word);
         return response.data;
     },
@@ -166,16 +152,3 @@ export const api = {
         return response.data;
     }
 };
-
-export interface ChatMessage {
-    role: 'user' | 'assistant';
-    content: string;
-}
-
-export interface VocabularyItem {
-    word: string;
-    definition: string;
-    pronunciation: string;
-    translation: string;
-    example_sentence: string;
-}

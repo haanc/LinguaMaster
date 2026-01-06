@@ -8,7 +8,8 @@
     "dev:web": "vite --config vite.config.web.ts",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:types": "cd backend && ./venv/Scripts/python.exe scripts/generate_types.py"
   },
   "dependencies": {
     "@radix-ui/react-popover": "^1.1.15",

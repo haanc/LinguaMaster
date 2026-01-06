@@ -1,6 +1,6 @@
 
 import { supabase, getUser } from './supabase';
-import { api, SavedWord } from './api';
+import { api } from './api';
 
 // Interface for Supabase User Vocab Table
 interface RemoteVocab {
@@ -36,7 +36,7 @@ export const syncService = {
         // 1. Pull Vocab
         const { data: remoteData, error } = await supabase
             .from('user_vocab')
-            .select('*');
+            .select('*') as { data: RemoteVocab[] | null, error: any };
 
         if (error) {
             console.error("Supabase Pull Error:", error);
