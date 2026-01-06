@@ -1,0 +1,155 @@
+/* Learning Panel - Appears when video is paused */
+.learning-panel {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    animation: panelSlideUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes panelSlideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.learning-panel-content {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Learning Button */
+.learning-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 10px 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    white-space: nowrap;
+}
+
+.learning-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+.learning-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.learning-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.learning-btn.loading {
+    pointer-events: none;
+}
+
+.learning-btn.loading .btn-icon {
+    animation: iconPulse 1s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.learning-btn.has-review {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.08));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.learning-btn.has-review .btn-icon {
+    animation: bellShake 2s ease-in-out infinite;
+}
+
+@keyframes bellShake {
+    0%, 100% { transform: rotate(0); }
+    10%, 30% { transform: rotate(-10deg); }
+    20%, 40% { transform: rotate(10deg); }
+    50% { transform: rotate(0); }
+}
+
+/* Button Icon */
+.btn-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Button Text */
+.btn-text {
+    font-size: 0.8rem;
+}
+
+/* Badge */
+.btn-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--primary);
+    border-radius: var(--radius-full);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-badge.review {
+    background: var(--accent-warning);
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .learning-panel-content {
+        gap: var(--space-xs);
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    .learning-btn {
+        padding: 8px 12px;
+    }
+
+    .btn-text {
+        display: none;
+    }
+
+    .btn-icon {
+        font-size: 1.1rem;
+    }
+}

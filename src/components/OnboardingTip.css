@@ -1,0 +1,141 @@
+/* Onboarding Tip */
+.onboarding-tip {
+    position: absolute;
+    z-index: 500;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-md);
+    max-width: 280px;
+    animation: tipFadeIn 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Position Variants */
+.tip-top {
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tip-bottom {
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tip-left {
+    right: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tip-right {
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Content */
+.tip-content {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.tip-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.tip-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tip-text h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tip-text p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Dismiss Button */
+.tip-dismiss {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tip-dismiss:hover {
+    background: var(--primary-light);
+}
+
+/* Arrow */
+.tip-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    transform: rotate(45deg);
+}
+
+.tip-bottom .tip-arrow {
+    top: -7px;
+    left: 50%;
+    margin-left: -6px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.tip-top .tip-arrow {
+    bottom: -7px;
+    left: 50%;
+    margin-left: -6px;
+    border-left: none;
+    border-top: none;
+}
+
+.tip-left .tip-arrow {
+    right: -7px;
+    top: 50%;
+    margin-top: -6px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.tip-right .tip-arrow {
+    left: -7px;
+    top: 50%;
+    margin-top: -6px;
+    border-right: none;
+    border-top: none;
+}

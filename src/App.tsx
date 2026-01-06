@@ -1,9 +1,12 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react'
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import Hls from 'hls.js'
 import { useMediaList, useSubtitleSegments } from './hooks/useMedia'
 import SubtitleSidebar from './components/SubtitleSidebar'
 import SubtitleOverlay from './components/SubtitleOverlay'
 import NotebookView from './components/NotebookView'
+import LearningPanel from './components/LearningPanel'
+import QuickReview from './components/QuickReview'
+import VideoWordList from './components/VideoWordList'
 import { api } from './services/api'
 import './App.css'
 
@@ -12,7 +15,7 @@ import { MediaSource } from './services/api'
 import LibraryGrid from './components/LibraryGrid'
 
 
-import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from "react-resizable-panels";
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle, ImperativePanelHandle } from "react-resizable-panels";
 import { AuthModal } from './components/Auth/AuthModal'
 import { getUser, signOut, supabase } from './services/supabase'
 import { User } from '@supabase/supabase-js'
@@ -60,7 +63,16 @@ function App() {
   const [targetLanguage, setTargetLanguage] = useState<string>("Chinese"); // Default
   const [showTranslation, setShowTranslation] = useState<boolean>(false); // Dual subtitle toggle - default OFF
   const [isTranslating, setIsTranslating] = useState<boolean>(false); // Translation loading state
+  const [isPaused, setIsPaused] = useState<boolean>(true); // Video pause state for learning panel
+  const [showQuickReview, setShowQuickReview] = useState<boolean>(false); // Quick review modal
+  const [showVideoWordList, setShowVideoWordList] = useState<boolean>(false); // Video word list modal
+  const [vocabCount, setVocabCount] = useState<number>(0); // Current video vocab count
+  const [reviewCount, setReviewCount] = useState<number>(0); // Words due for review
   const videoRef = useRef<HTMLVideoElement>(null)
+  const sidebarPanelRef = useRef<ImperativePanelHandle>(null)
+
+  // Layout mode: 'compact' when playing, 'expanded' when paused/interacting
+  const [layoutMode, setLayoutMode] = useState<'compact' | 'expanded'>('expanded');
 
   // Auth State
   const [user, setUser] = useState<User | null>(null);
@@ -68,6 +80,62 @@ function App() {
 
   const { data: mediaList, isLoading, refetch } = useMediaList()
   const { data: segments = [], refetch: refetchSegments } = useSubtitleSegments(currentMedia?.id || null)
+
+  // Fetch review count on mount and when vocab is updated
+  useEffect(() => {
+    const fetchReviewCount = async () => {
+      try {
+        const count = await api.getReviewCount();
+        setReviewCount(count);
+      } catch (err) {
+        console.error('Failed to fetch review count:', err);
+      }
+    };
+    fetchReviewCount();
+
+    // Listen for vocab updates
+    const handleVocabUpdate = () => fetchReviewCount();
+    window.addEventListener('vocab-updated', handleVocabUpdate);
+    return () => window.removeEventListener('vocab-updated', handleVocabUpdate);
+  }, []);
+
+  // Fetch video-specific vocab count when media changes
+  useEffect(() => {
+    const fetchVocabCount = async () => {
+      if (currentMedia?.id) {
+        try {
+          const count = await api.getVideoVocabCount(currentMedia.id);
+          setVocabCount(count);
+        } catch (err) {
+          console.error('Failed to fetch vocab count:', err);
+        }
+      } else {
+        setVocabCount(0);
+      }
+    };
+    fetchVocabCount();
+
+    // Listen for vocab updates
+    const handleVocabUpdate = () => fetchVocabCount();
+    window.addEventListener('vocab-updated', handleVocabUpdate);
+    return () => window.removeEventListener('vocab-updated', handleVocabUpdate);
+  }, [currentMedia?.id]);
+
+  // Intelligent layout: adjust sidebar based on play/pause state
+  useEffect(() => {
+    if (view !== 'player') return;
+
+    const newMode = isPaused ? 'expanded' : 'compact';
+    if (newMode !== layoutMode) {
+      setLayoutMode(newMode);
+
+      // Use imperative API to resize panels smoothly
+      if (sidebarPanelRef.current) {
+        const targetSize = isPaused ? 35 : 20; // 35% when paused, 20% when playing
+        sidebarPanelRef.current.resize(targetSize);
+      }
+    }
+  }, [isPaused, view]);
 
   // Handle translation toggle - trigger translation when enabled
   const handleShowTranslationChange = async (show: boolean) => {
@@ -318,11 +386,12 @@ function App() {
     return youtubeRegex.test(url) || bilibiliRegex.test(url);
   };
 
-  const handleImportUrl = async () => {
-    if (!urlInput) return
+  const handleImportUrl = async (directUrl?: string) => {
+    const url = directUrl || urlInput;
+    if (!url) return
 
     // Validate URL before proceeding
-    if (!isValidUrl(urlInput)) {
+    if (!isValidUrl(url)) {
       setMessage('❌ Invalid URL: Please enter a valid YouTube or Bilibili video link (e.g., youtube.com/watch?v=...)');
       return;
     }
@@ -331,7 +400,7 @@ function App() {
     // Instant feedback: Start background process immediately
     setMessage('🚀 Starting background import...')
     try {
-      await api.downloadMedia(urlInput)
+      await api.downloadMedia(url)
       setMessage(`Video queued! It will appear in your Library momentarily.`)
       setUrlInput('')
       // Polling will handle the rest
@@ -377,6 +446,36 @@ function App() {
     setCurrentMedia(null);
     setView('library'); // Explicitly go to library
   };
+
+  // Learning Panel handlers
+  const handleExplainSentence = useCallback(() => {
+    if (activeSegment?.text) {
+      // Trigger AI explanation - dispatch event for SubtitleSidebar to handle
+      window.dispatchEvent(new CustomEvent('explain-sentence', { detail: activeSegment.text }));
+    }
+  }, [activeSegment]);
+
+  const handleWordByWord = useCallback(() => {
+    // Enable translation if not already
+    if (!showTranslation) {
+      handleShowTranslationChange(true);
+    }
+  }, [showTranslation]);
+
+  const handleShowVocab = useCallback(() => {
+    // Open video word list modal
+    setShowVideoWordList(true);
+  }, []);
+
+  const handleQuickReview = useCallback(() => {
+    setShowQuickReview(true);
+  }, []);
+
+  const handleQuickReviewClose = useCallback(() => {
+    setShowQuickReview(false);
+    // Refresh review count after closing
+    api.getReviewCount().then(setReviewCount).catch(console.error);
+  }, []);
 
   return (
     <div className="app-layout">
@@ -484,6 +583,8 @@ function App() {
                         controls
                         autoPlay // Auto-play when loaded
                         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                        onPlay={() => setIsPaused(false)}
+                        onPause={() => setIsPaused(true)}
                         onError={(e) => {
                           const err = e.currentTarget.error;
                           console.error('Video Error:', err);
@@ -496,6 +597,19 @@ function App() {
                         text={activeSegment?.text || null}
                         translation={showTranslation ? activeSegment?.translation : undefined}
                       />
+
+                      {/* Learning Panel - appears when video is paused */}
+                      <LearningPanel
+                        isVisible={isPaused && view === 'player'}
+                        currentSentence={activeSegment?.text}
+                        onExplain={handleExplainSentence}
+                        onWordByWord={handleWordByWord}
+                        onShowVocab={handleShowVocab}
+                        onQuickReview={handleQuickReview}
+                        vocabCount={vocabCount}
+                        reviewCount={reviewCount}
+                        isTranslating={isTranslating}
+                      />
                     </>
                   ) : view === 'notebook' ? (
                     <NotebookView />
@@ -503,6 +617,9 @@ function App() {
                     <LibraryGrid
                       onSelectVideo={handleSelectLibraryVideo}
                       onDeleteVideo={handleDeleteVideo}
+                      onImportUrl={handleImportUrl}
+                      onSelectLocal={handleSelectVideo}
+                      isImporting={isImporting}
                     />
                   )}
                 </div>
@@ -514,7 +631,13 @@ function App() {
             </PanelResizeHandle>
 
             {/* Sidebar Area */}
-            <Panel defaultSize={25} minSize={20}>
+            <Panel
+              ref={sidebarPanelRef}
+              defaultSize={25}
+              minSize={15}
+              maxSize={50}
+              className={`sidebar-panel ${layoutMode}`}
+            >
               <ErrorBoundary>
                 <SubtitleSidebar
                   segments={segments || []}
@@ -527,6 +650,7 @@ function App() {
                   isTranslating={isTranslating}
                   mediaId={currentMedia?.id}
                   sourceLanguage={currentMedia?.language}
+                  isCompact={layoutMode === 'compact'}
                 />
               </ErrorBoundary>
             </Panel>
@@ -545,6 +669,19 @@ function App() {
           getUser().then(setUser);
           setMessage('Logged in successfully!');
         }}
+      />
+
+      <QuickReview
+        isOpen={showQuickReview}
+        onClose={handleQuickReviewClose}
+        mediaId={currentMedia?.id}
+      />
+
+      <VideoWordList
+        isOpen={showVideoWordList}
+        onClose={() => setShowVideoWordList(false)}
+        mediaId={currentMedia?.id}
+        onSeek={handleSeek}
       />
     </div>
   )

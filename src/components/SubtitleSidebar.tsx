@@ -18,6 +18,7 @@ interface SubtitleSidebarProps {
     isTranslating?: boolean;
     mediaId?: string;
     sourceLanguage?: string;
+    isCompact?: boolean; // Compact mode when video is playing
 }
 
 const LANGUAGES = ["Chinese", "English", "Spanish", "French", "Japanese", "German"];
@@ -32,7 +33,8 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
     onShowTranslationChange,
     isTranslating,
     mediaId,
-    sourceLanguage
+    sourceLanguage,
+    isCompact = false
 }) => {
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -178,7 +180,7 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
     }, [targetLanguage]);
 
     return (
-        <div className="subtitle-sidebar">
+        <div className={`subtitle-sidebar ${isCompact ? 'compact' : ''}`}>
             <div className="sidebar-header">
                 <div className="header-top">
                     <h3>Interactive Subtitles</h3>

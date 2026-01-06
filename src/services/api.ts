@@ -42,6 +42,34 @@ export interface SaveWordInput {
     language?: string;
 }
 
+// Vocab word with SRS fields (from database)
+export interface VocabWord {
+    id: string;
+    word: string;
+    translation?: string;
+    context_sentence?: string;
+    media_id?: string;
+    media_time?: number;
+    language?: string;
+    next_review?: string;
+    ease_factor?: number;
+    interval?: number;
+    repetitions?: number;
+}
+
+export interface VocabListResponse {
+    items: VocabWord[];
+    total: number;
+}
+
+export interface VocabQueryParams {
+    language?: string;
+    due_for_review?: boolean;
+    media_id?: string;
+    limit?: number;
+    offset?: number;
+}
+
 export const api = {
     listMedia: async (): Promise<MediaSource[]> => {
         const response = await axios.get(`${API_BASE_URL}/media`);
@@ -107,6 +135,32 @@ export const api = {
     reviewWord: async (wordId: string, quality: number) => {
         const response = await axios.post(`${API_BASE_URL}/vocab/${wordId}/review`, { quality });
         return response.data;
+    },
+
+    getVocabulary: async (params?: VocabQueryParams): Promise<VocabListResponse> => {
+        const queryParams = new URLSearchParams();
+        if (params?.language && params.language !== 'All') queryParams.append('language', params.language);
+        if (params?.due_for_review) queryParams.append('due_only', 'true');
+        if (params?.media_id) queryParams.append('media_id', params.media_id);
+        if (params?.limit) queryParams.append('limit', params.limit.toString());
+        if (params?.offset) queryParams.append('offset', params.offset.toString());
+
+        const response = await axios.get(`${API_BASE_URL}/vocab`, { params: queryParams });
+        // Backend returns array directly, wrap in response object
+        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
+        return { items, total: items.length };
+    },
+
+    getReviewCount: async (): Promise<number> => {
+        const response = await axios.get(`${API_BASE_URL}/vocab`, { params: { due_only: 'true' } });
+        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
+        return items.length;
+    },
+
+    getVideoVocabCount: async (mediaId: string): Promise<number> => {
+        const response = await axios.get(`${API_BASE_URL}/vocab`, { params: { media_id: mediaId } });
+        const items = Array.isArray(response.data) ? response.data : response.data.items || [];
+        return items.length;
     },
 
     // --- AI Features ---

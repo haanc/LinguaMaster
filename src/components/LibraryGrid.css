@@ -215,3 +215,15 @@
         opacity: 0.7;
     }
 }
+
+/* Empty Placeholder Fallback */
+.empty-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 1.1rem;
+    text-align: center;
+    padding: var(--space-xl, 2rem);
+}

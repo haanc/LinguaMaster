@@ -1,14 +1,24 @@
 
 import React, { useEffect, useState } from 'react';
 import { api, MediaSource } from '../services/api';
+import EmptyState from './EmptyState';
 import './LibraryGrid.css';
 
 interface LibraryGridProps {
     onSelectVideo: (media: MediaSource) => void;
     onDeleteVideo: (mediaId: string) => void;
+    onImportUrl?: (url: string) => void;
+    onSelectLocal?: () => void;
+    isImporting?: boolean;
 }
 
-const LibraryGrid: React.FC<LibraryGridProps> = ({ onSelectVideo, onDeleteVideo }) => {
+const LibraryGrid: React.FC<LibraryGridProps> = ({
+    onSelectVideo,
+    onDeleteVideo,
+    onImportUrl,
+    onSelectLocal,
+    isImporting = false
+}) => {
     const [mediaList, setMediaList] = useState<MediaSource[]>([]);
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -70,9 +80,17 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({ onSelectVideo, onDeleteVideo 
             </div>
 
             {mediaList.length === 0 ? (
-                <div className="text-gray-400 text-center py-20">
-                    No videos yet. Paste a URL above to import one!
-                </div>
+                onImportUrl && onSelectLocal ? (
+                    <EmptyState
+                        onImportUrl={onImportUrl}
+                        onSelectLocal={onSelectLocal}
+                        isImporting={isImporting}
+                    />
+                ) : (
+                    <div className="empty-placeholder">
+                        No videos yet. Paste a URL above to import one!
+                    </div>
+                )
             ) : (
                 <div className="library-grid">
                     {mediaList.map((media) => (
