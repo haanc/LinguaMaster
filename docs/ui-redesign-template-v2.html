@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluent Learner - Modern SaaS/AI Style Redesign</title>
+
+    <!-- Google Fonts: Inter with multiple weights -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <style>
+        /* ============================================
+           FLUENT LEARNER v2 - Modern SaaS/AI Style
+           Features: Mesh Gradients, Glassmorphism,
+           Deep Blue Background with Color Orbs
+           ============================================ */
+
+        :root {
+            /* === Color Palette === */
+            /* Primary: Electric Purple */
+            --primary-300: #C4B5FD;
+            --primary-400: #A78BFA;
+            --primary-500: #8B5CF6;
+            --primary-600: #7C3AED;
+            --primary-700: #6D28D9;
+
+            /* Accent: Vivid Cyan/Teal */
+            --accent-300: #67E8F9;
+            --accent-400: #22D3EE;
+            --accent-500: #06B6D4;
+
+            /* Warm Accent: Amber/Orange for CTA */
+            --warm-400: #FBBF24;
+            --warm-500: #F59E0B;
+            --warm-600: #D97706;
+
+            /* Semantic Colors */
+            --success: #34D399;
+            --warning: #FBBF24;
+            --error: #F87171;
+            --info: #60A5FA;
+
+            /* Background: Deep Blue-Purple */
+            --bg-base: #0B0F1A;
+            --bg-surface: rgba(15, 23, 42, 0.6);
+            --bg-elevated: rgba(30, 41, 59, 0.5);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --bg-glass-strong: rgba(255, 255, 255, 0.06);
+
+            /* Borders */
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --border-glow: rgba(139, 92, 246, 0.5);
+
+            /* Text */
+            --text-primary: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --text-muted: #64748B;
+            --text-dim: #475569;
+
+            /* Glassmorphism */
+            --glass-blur: 20px;
+            --glass-saturate: 180%;
+
+            /* Spacing */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --space-8: 32px;
+            --space-10: 40px;
+            --space-12: 48px;
+            --space-16: 64px;
+
+            /* Border Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --radius-2xl: 28px;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-glow-sm: 0 0 20px rgba(139, 92, 246, 0.15);
+            --shadow-glow-md: 0 0 40px rgba(139, 92, 246, 0.2);
+            --shadow-glow-lg: 0 0 60px rgba(139, 92, 246, 0.25);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            /* Transitions */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* === Reduced Motion === */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* === Reset === */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-base);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden;
+        }
+
+        /* === Background with Gradient Orbs === */
+        .app-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Gradient Orbs - AI感背景光晕 */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.6) 0%, transparent 70%);
+            top: -200px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.5) 0%, transparent 70%);
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.3) 0%, transparent 70%);
+            top: 50%;
+            left: 30%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 10px) scale(1.02); }
+        }
+
+        /* === Content Layer === */
+        .content-layer {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* === Floating Capsule Navbar === */
+        .navbar {
+            position: relative;
+            margin: var(--space-5) var(--space-6);
+            padding: var(--space-3) var(--space-5);
+            background: var(--bg-glass);
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-2xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-glow-sm);
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-6);
+        }
+
+        /* Logo */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-glow-md);
+        }
+
+        .logo-icon svg {
+            width: 22px;
+            height: 22px;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, var(--primary-300) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: var(--space-1);
+            padding: var(--space-1);
+            background: var(--bg-glass-strong);
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-glass);
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-5);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-full);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .nav-tab:hover {
+            color: var(--text-secondary);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            color: white;
+            box-shadow: var(--shadow-glow-sm);
+        }
+
+        .nav-tab svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        /* === Hero Import Input === */
+        .import-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--bg-glass-strong);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            transition: all var(--transition-base);
+        }
+
+        .import-box:focus-within {
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), var(--shadow-glow-sm);
+        }
+
+        .import-input {
+            width: 320px;
+            padding: var(--space-3) var(--space-5);
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 400;
+            outline: none;
+        }
+
+        .import-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .import-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-5);
+            background: linear-gradient(135deg, var(--warm-500), var(--warm-600));
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .import-btn:hover {
+            background: linear-gradient(135deg, var(--warm-400), var(--warm-500));
+        }
+
+        .import-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-glass {
+            background: var(--bg-glass-strong);
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+        }
+
+        .btn-glass:hover {
+            background: var(--bg-elevated);
+            border-color: var(--border-glass-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-glow {
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 2.5s infinite;
+        }
+
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        .btn-glow:hover {
+            box-shadow: var(--shadow-glow-md);
+        }
+
+        /* User Avatar */
+        .user-avatar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+            background: var(--bg-glass-strong);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .user-avatar:hover {
+            border-color: var(--border-glass-hover);
+        }
+
+        .avatar-img {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-400), var(--accent-400));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .avatar-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* === Main Layout === */
+        .main-layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 0 var(--space-6) var(--space-6);
+            gap: var(--space-4);
+        }
+
+        /* === Library Panel === */
+        .library-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .library-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-6);
+        }
+
+        .library-title {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #fff 0%, var(--primary-300) 50%, var(--accent-300) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .library-subtitle {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: var(--space-1);
+        }
+
+        .library-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: var(--space-2);
+        }
+
+        /* === Video Grid === */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-6);
+        }
+
+        /* === Video Card - Glassmorphism === */
+        .video-card {
+            position: relative;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-glow-md), var(--shadow-card);
+        }
+
+        .card-thumbnail {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+        }
+
+        .card-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform var(--transition-slow);
+        }
+
+        .video-card:hover .card-thumbnail img {
+            transform: scale(1.05);
+        }
+
+        .card-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(11, 15, 26, 0.9) 0%, transparent 60%);
+        }
+
+        .card-actions {
+            position: absolute;
+            top: var(--space-3);
+            right: var(--space-3);
+            display: flex;
+            gap: var(--space-2);
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all var(--transition-fast);
+        }
+
+        .video-card:hover .card-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .action-btn:hover {
+            background: var(--error);
+            border-color: var(--error);
+        }
+
+        .action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            position: absolute;
+            top: var(--space-3);
+            left: var(--space-3);
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            backdrop-filter: blur(8px);
+        }
+
+        .badge-ready {
+            background: rgba(52, 211, 153, 0.2);
+            border: 1px solid rgba(52, 211, 153, 0.4);
+            color: var(--success);
+        }
+
+        .badge-processing {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: var(--warning);
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .badge-error {
+            background: rgba(248, 113, 113, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.4);
+            color: var(--error);
+        }
+
+        .badge-cloud {
+            background: rgba(96, 165, 250, 0.2);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            color: var(--info);
+        }
+
+        /* Duration Bubble */
+        .duration-bubble {
+            position: absolute;
+            bottom: var(--space-3);
+            right: var(--space-3);
+            padding: var(--space-1) var(--space-2);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .card-content {
+            padding: var(--space-4) var(--space-5);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: var(--space-2);
+            transition: color var(--transition-fast);
+        }
+
+        .video-card:hover .card-title {
+            background: linear-gradient(90deg, var(--text-primary), var(--primary-300));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card-meta {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        /* === Empty State === */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-16) var(--space-8);
+            text-align: center;
+        }
+
+        .empty-icons {
+            display: flex;
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-glass-strong);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            color: var(--text-dim);
+            transition: all var(--transition-base);
+        }
+
+        .empty-icon:nth-child(2) {
+            transform: translateY(-10px);
+        }
+
+        .empty-icon svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .empty-desc {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            max-width: 400px;
+            line-height: 1.7;
+        }
+
+        /* === Sidebar Panel - Glassmorphism === */
+        .sidebar-panel {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-glass);
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: var(--space-5);
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .sidebar-title-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+
+        .sidebar-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            border-radius: var(--radius-md);
+            color: white;
+        }
+
+        .sidebar-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            gap: var(--space-2);
+            padding: var(--space-1);
+            background: var(--bg-glass-strong);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-glass);
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            padding: var(--space-2) var(--space-4);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .sidebar-tab:hover {
+            color: var(--text-secondary);
+        }
+
+        .sidebar-tab.active {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            color: white;
+            box-shadow: var(--shadow-glow-sm);
+        }
+
+        /* Language Bar */
+        .language-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-5);
+            background: var(--bg-glass-strong);
+            border-bottom: 1px solid var(--border-glass);
+            font-size: 0.85rem;
+        }
+
+        .lang-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .lang-select {
+            padding: var(--space-2) var(--space-3);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .lang-select:focus {
+            border-color: var(--primary-500);
+        }
+
+        .toggle-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            margin-left: auto;
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--primary-500);
+            color: var(--primary-400);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            border-color: transparent;
+            color: white;
+            box-shadow: var(--shadow-glow-sm);
+        }
+
+        .toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Subtitle List */
+        .subtitle-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-3);
+        }
+
+        .subtitle-row {
+            display: flex;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            margin-bottom: var(--space-2);
+        }
+
+        .subtitle-row:hover {
+            background: var(--bg-glass-strong);
+        }
+
+        .subtitle-row.active {
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), transparent);
+            border-left-color: var(--primary-500);
+        }
+
+        .subtitle-time {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            flex-shrink: 0;
+            width: 48px;
+        }
+
+        .subtitle-row.active .subtitle-time {
+            color: var(--primary-400);
+        }
+
+        .subtitle-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .subtitle-text {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .subtitle-translation {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: var(--space-2);
+            line-height: 1.5;
+        }
+
+        .subtitle-actions {
+            opacity: 0;
+            transition: opacity var(--transition-fast);
+        }
+
+        .subtitle-row:hover .subtitle-actions {
+            opacity: 1;
+        }
+
+        .ai-explain-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .ai-explain-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-glow-sm);
+        }
+
+        .ai-explain-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Word Hover */
+        .word {
+            display: inline;
+            cursor: pointer;
+            border-radius: 3px;
+            padding: 0 2px;
+            margin: 0 -2px;
+            transition: all var(--transition-fast);
+        }
+
+        .word:hover {
+            background: rgba(139, 92, 246, 0.25);
+            color: var(--primary-300);
+        }
+
+        /* === Footer Status === */
+        .status-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-6);
+            background: var(--bg-glass);
+            border-top: 1px solid var(--border-glass);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(52, 211, 153, 0); }
+        }
+
+        /* === Scrollbar === */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-elevated);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Background Gradient Orbs -->
+        <div class="bg-orbs">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+        </div>
+
+        <!-- Content Layer -->
+        <div class="content-layer">
+            <!-- Floating Capsule Navbar -->
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i data-lucide="languages"></i>
+                        </div>
+                        <span class="logo-text">Fluent Learner</span>
+                    </div>
+
+                    <div class="nav-tabs">
+                        <button class="nav-tab active">
+                            <i data-lucide="layout-grid"></i>
+                            Library
+                        </button>
+                        <button class="nav-tab">
+                            <i data-lucide="book-open"></i>
+                            Notebook
+                        </button>
+                    </div>
+                </div>
+
+                <div class="navbar-right">
+                    <div class="import-box">
+                        <input type="text" class="import-input" placeholder="Paste YouTube or Bilibili URL...">
+                        <button class="import-btn">
+                            <i data-lucide="download"></i>
+                            Import
+                        </button>
+                    </div>
+
+                    <button class="btn btn-glass">
+                        <i data-lucide="folder-open"></i>
+                        Local
+                    </button>
+
+                    <button class="btn btn-glow">
+                        <i data-lucide="refresh-cw"></i>
+                        Sync
+                    </button>
+
+                    <div class="user-avatar">
+                        <div class="avatar-img">HC</div>
+                        <span class="avatar-name">Han Cao</span>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Layout -->
+            <main class="main-layout">
+                <!-- Library Panel -->
+                <div class="library-panel">
+                    <div class="library-header">
+                        <div>
+                            <h1 class="library-title">My Library</h1>
+                            <p class="library-subtitle">3 videos in your collection</p>
+                        </div>
+                    </div>
+
+                    <div class="library-scroll">
+                        <div class="video-grid">
+                            <!-- Video Card 1 -->
+                            <div class="video-card">
+                                <div class="card-thumbnail">
+                                    <img src="https://i.ytimg.com/vi/iCvmsMzlF7o/maxresdefault.jpg" alt="TED Talk thumbnail">
+                                    <div class="card-gradient"></div>
+                                    <span class="status-badge badge-ready">Ready</span>
+                                    <div class="card-actions">
+                                        <button class="action-btn">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </div>
+                                    <span class="duration-bubble">20:19</span>
+                                </div>
+                                <div class="card-content">
+                                    <h3 class="card-title">TED Talk: The Power of Vulnerability - Brene Brown</h3>
+                                    <p class="card-meta">Added Jan 5, 2026</p>
+                                </div>
+                            </div>
+
+                            <!-- Video Card 2 -->
+                            <div class="video-card">
+                                <div class="card-thumbnail">
+                                    <img src="https://i.ytimg.com/vi/JGwWNGJdvx8/maxresdefault.jpg" alt="Music video thumbnail">
+                                    <div class="card-gradient"></div>
+                                    <span class="status-badge badge-processing">Processing</span>
+                                    <div class="card-actions">
+                                        <button class="action-btn">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </div>
+                                    <span class="duration-bubble">4:24</span>
+                                </div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Ed Sheeran - Shape of You (Official Music Video)</h3>
+                                    <p class="card-meta">Added Jan 4, 2026</p>
+                                </div>
+                            </div>
+
+                            <!-- Video Card 3 -->
+                            <div class="video-card">
+                                <div class="card-thumbnail">
+                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-surface), var(--bg-base));">
+                                        <i data-lucide="file-audio" style="width: 48px; height: 48px; color: var(--text-dim);"></i>
+                                    </div>
+                                    <div class="card-gradient"></div>
+                                    <span class="status-badge badge-cloud">Cloud</span>
+                                    <div class="card-actions">
+                                        <button class="action-btn">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </div>
+                                    <span class="duration-bubble">15:32</span>
+                                </div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Local Audio File - Interview Practice Session</h3>
+                                    <p class="card-meta">Added Jan 3, 2026</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty State (hidden when has content) -->
+                        <!--
+                        <div class="empty-state">
+                            <div class="empty-icons">
+                                <div class="empty-icon"><i data-lucide="video"></i></div>
+                                <div class="empty-icon"><i data-lucide="sparkles"></i></div>
+                                <div class="empty-icon"><i data-lucide="languages"></i></div>
+                            </div>
+                            <h2 class="empty-title">Your library is empty</h2>
+                            <p class="empty-desc">Paste a YouTube or Bilibili URL above to import your first video and start learning with AI-powered subtitles.</p>
+                        </div>
+                        -->
+                    </div>
+                </div>
+
+                <!-- Sidebar Panel -->
+                <aside class="sidebar-panel">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title-row">
+                            <div class="sidebar-icon">
+                                <i data-lucide="subtitles"></i>
+                            </div>
+                            <h2 class="sidebar-title">Interactive Subtitles</h2>
+                        </div>
+                        <div class="sidebar-tabs">
+                            <button class="sidebar-tab active">Transcript</button>
+                            <button class="sidebar-tab">AI Tutor</button>
+                        </div>
+                    </div>
+
+                    <div class="language-bar">
+                        <span class="lang-label">Target:</span>
+                        <select class="lang-select">
+                            <option>Chinese</option>
+                            <option>English</option>
+                            <option>Spanish</option>
+                            <option>French</option>
+                            <option>Japanese</option>
+                        </select>
+                        <button class="toggle-btn active" title="Show translation">
+                            <i data-lucide="globe"></i>
+                        </button>
+                    </div>
+
+                    <div class="subtitle-list">
+                        <div class="subtitle-row">
+                            <span class="subtitle-time">00:05</span>
+                            <div class="subtitle-content">
+                                <div class="subtitle-text">
+                                    <span class="word">So</span> <span class="word">I'm</span> <span class="word">going</span> <span class="word">to</span> <span class="word">start</span> <span class="word">with</span> <span class="word">this.</span>
+                                </div>
+                                <div class="subtitle-translation">所以我从这个开始。</div>
+                            </div>
+                            <div class="subtitle-actions">
+                                <button class="ai-explain-btn" title="AI Explain">
+                                    <i data-lucide="sparkles"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="subtitle-row active">
+                            <span class="subtitle-time">00:12</span>
+                            <div class="subtitle-content">
+                                <div class="subtitle-text">
+                                    <span class="word">A</span> <span class="word">couple</span> <span class="word">years</span> <span class="word">ago,</span> <span class="word">an</span> <span class="word">event</span> <span class="word">planner</span> <span class="word">called</span> <span class="word">me.</span>
+                                </div>
+                                <div class="subtitle-translation">几年前，一位活动策划师打电话给我。</div>
+                            </div>
+                            <div class="subtitle-actions">
+                                <button class="ai-explain-btn" title="AI Explain">
+                                    <i data-lucide="sparkles"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="subtitle-row">
+                            <span class="subtitle-time">00:18</span>
+                            <div class="subtitle-content">
+                                <div class="subtitle-text">
+                                    <span class="word">Because</span> <span class="word">I</span> <span class="word">was</span> <span class="word">going</span> <span class="word">to</span> <span class="word">be</span> <span class="word">speaking</span> <span class="word">at</span> <span class="word">her</span> <span class="word">event.</span>
+                                </div>
+                                <div class="subtitle-translation">因为我将在她的活动上演讲。</div>
+                            </div>
+                            <div class="subtitle-actions">
+                                <button class="ai-explain-btn" title="AI Explain">
+                                    <i data-lucide="sparkles"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="subtitle-row">
+                            <span class="subtitle-time">00:25</span>
+                            <div class="subtitle-content">
+                                <div class="subtitle-text">
+                                    <span class="word">And</span> <span class="word">she</span> <span class="word">said,</span> <span class="word">"I'm</span> <span class="word">really</span> <span class="word">struggling</span> <span class="word">with</span> <span class="word">how</span> <span class="word">to</span> <span class="word">write</span> <span class="word">about</span> <span class="word">you</span> <span class="word">on</span> <span class="word">the</span> <span class="word">little</span> <span class="word">flyer."</span>
+                                </div>
+                                <div class="subtitle-translation">她说："我真的很难在小传单上写关于你的介绍。"</div>
+                            </div>
+                            <div class="subtitle-actions">
+                                <button class="ai-explain-btn" title="AI Explain">
+                                    <i data-lucide="sparkles"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="subtitle-row">
+                            <span class="subtitle-time">00:32</span>
+                            <div class="subtitle-content">
+                                <div class="subtitle-text">
+                                    <span class="word">And</span> <span class="word">I</span> <span class="word">thought,</span> <span class="word">"Well,</span> <span class="word">what's</span> <span class="word">the</span> <span class="word">struggle?"</span>
+                                </div>
+                                <div class="subtitle-translation">我想，"有什么难的呢？"</div>
+                            </div>
+                            <div class="subtitle-actions">
+                                <button class="ai-explain-btn" title="AI Explain">
+                                    <i data-lucide="sparkles"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </main>
+
+            <!-- Status Footer -->
+            <footer class="status-footer">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>Backend connected</span>
+                </div>
+                <span>Fluent Learner v2.0 | Powered by AI</span>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
