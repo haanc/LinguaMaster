@@ -33,3 +33,11 @@ backend/venv/
 backend/.env
 __pycache__/
 *.pyc
+
+# Security - Never commit these
+*.pem
+*.key
+*.crt
+credentials.json
+secrets.json
+.secrets/

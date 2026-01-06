@@ -71,12 +71,14 @@ function App() {
 
   // Handle translation toggle - trigger translation when enabled
   const handleShowTranslationChange = async (show: boolean) => {
+    console.log('handleShowTranslationChange called:', { show, mediaId: currentMedia?.id, segmentsCount: segments.length });
     setShowTranslation(show);
 
     // If enabling translation and we have segments without translations
     if (show && currentMedia?.id && segments.length > 0) {
       // Check if any segments need translation
       const needsTranslation = segments.filter(s => !s.translation);
+      console.log('Segments needing translation:', needsTranslation.length);
       if (needsTranslation.length > 0) {
         setIsTranslating(true);
         setMessage(`🌐 翻译中... (${needsTranslation.length} 条字幕)`);
