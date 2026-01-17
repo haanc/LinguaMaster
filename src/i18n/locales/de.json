@@ -1,0 +1,136 @@
+{
+  "app": {
+    "name": "LinguaMaster"
+  },
+  "nav": {
+    "library": "Bibliothek",
+    "notebook": "Notizbuch",
+    "settings": "Einstellungen",
+    "import": "Importieren",
+    "local": "Lokal",
+    "login": "Anmelden"
+  },
+  "library": {
+    "title": "Meine Bibliothek",
+    "loading": "Bibliothek wird geladen...",
+    "noVideos": "Noch keine Videos. Fügen Sie oben eine URL ein, um eines zu importieren!",
+    "videoDeleted": "Video erfolgreich gelöscht"
+  },
+  "empty": {
+    "title": "Beginnen Sie Ihre Sprachlernreise",
+    "description": "Fügen Sie einen YouTube-Link ein oder ziehen Sie eine lokale Videodatei hierher",
+    "urlPlaceholder": "Video-URL einfügen...",
+    "importBtn": "Importieren",
+    "importing": "Importieren...",
+    "or": "oder",
+    "selectLocal": "Lokale Datei auswählen",
+    "supported": "Unterstützt: YouTube, Bilibili, MP4, MKV, WebM"
+  },
+  "card": {
+    "ready": "BEREIT",
+    "error": "FEHLER",
+    "cloud": "CLOUD",
+    "processing": "VERARBEITUNG",
+    "delete": "Video löschen",
+    "confirm": "Bestätigen"
+  },
+  "sidebar": {
+    "transcript": "Transkript",
+    "tutor": "KI-Tutor",
+    "target": "Zielsprache",
+    "showTranslation": "Übersetzung anzeigen",
+    "explainThis": "Dies erklären",
+    "askQuestion": "Frage stellen...",
+    "send": "Senden",
+    "thinking": "Denke nach..."
+  },
+  "notebook": {
+    "title": "Vokabelheft",
+    "filter": "Filtern",
+    "all": "Alle",
+    "startReview": "Wiederholung starten",
+    "noWords": "Noch keine gespeicherten Wörter. Wählen Sie Wörter beim Ansehen von Videos aus, um sie hier hinzuzufügen.",
+    "word": "Wort",
+    "translation": "Übersetzung",
+    "context": "Kontext",
+    "nextReview": "Nächste Wiederholung",
+    "actions": "Aktionen",
+    "delete": "Löschen"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Anzeigesprache",
+    "languageDesc": "Wählen Sie Ihre bevorzugte Anzeigesprache",
+    "llm": "LLM-Konfiguration",
+    "llmDesc": "KI-Modelleinstellungen konfigurieren"
+  },
+  "progress": {
+    "downloading": "Herunterladen",
+    "transcribing": "Transkribieren",
+    "chunking": "Audio wird aufgeteilt",
+    "merging": "Ergebnisse werden zusammengeführt..."
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "close": "Schließen",
+    "loading": "Laden..."
+  },
+  "llmReminder": {
+    "title": "Hallo! Lass uns deinen KI-Assistenten einrichten 🎉",
+    "message": "Um das volle Lernerlebnis zu genießen, musst du zuerst einen KI-Dienst konfigurieren. Ohne ihn machen diese tollen Funktionen eine kleine Pause~",
+    "feature1": "Intelligente Wortübersetzung & Definitionen",
+    "feature2": "Grammatikanalyse von Sätzen",
+    "feature3": "Interaktiver KI-Tutor-Chat",
+    "feature4": "Automatische Untertitelübersetzung",
+    "note": "Keine Sorge, es dauert nur wenige Minuten! Wir unterstützen OpenAI, Claude, Gemini und mehr~",
+    "goToSettings": "Zu den Einstellungen",
+    "later": "Später"
+  },
+  "auth": {
+    "welcomeBack": "Willkommen zurück",
+    "createAccount": "Konto erstellen",
+    "login": "Anmelden",
+    "signUp": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "processing": "Wird verarbeitet...",
+    "signUpSuccess": "Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail zur Bestätigung."
+  },
+  "subtitleSidebar": {
+    "title": "Interaktive Untertitel"
+  },
+  "status": {
+    "selectVideo": "Wähle ein Video oder füge eine URL ein, um zu starten",
+    "translating": "Übersetze... ({{count}} Untertitel)",
+    "translationComplete": "Übersetzung abgeschlossen",
+    "translationFailed": "Übersetzung fehlgeschlagen: {{error}}",
+    "translatingTo": "Übersetze nach {{lang}}...",
+    "loggedOut": "Erfolgreich abgemeldet",
+    "hlsError": "HLS-Fehler: {{details}}",
+    "playingLocal": "Lokale Wiedergabe: {{path}}",
+    "cloudVideoFound": "Cloud-Video gefunden. Download startet...",
+    "downloadStarted": "Download gestartet: {{title}}",
+    "downloadFailed": "Download fehlgeschlagen: {{error}}",
+    "resolvingStream": "Stream-URL wird aufgelöst: {{title}}...",
+    "loadingBilibili": "Bilibili-Video wird geladen...",
+    "streaming": "Streaming: {{title}}",
+    "streamResolveFailed": "Stream-URL konnte nicht aufgelöst werden",
+    "error": "Fehler: {{error}}",
+    "playingLocalAudio": "Lokale Audio-Wiedergabe: {{title}}",
+    "processingError": "Fehler: {{error}} Bitte löschen und erneut versuchen.",
+    "videoProcessing": "Video wird {{status}}... Bitte warten.",
+    "invalidUrl": "Ungültige URL: Gib einen gültigen YouTube- oder Bilibili-Link ein",
+    "startingImport": "Hintergrund-Import startet...",
+    "videoQueued": "Video in Warteschlange! Es wird gleich in deiner Bibliothek erscheinen.",
+    "importFailed": "Import fehlgeschlagen: {{error}}",
+    "videoDeleted": "Video erfolgreich gelöscht",
+    "deleteFailed": "Video konnte nicht gelöscht werden",
+    "syncing": "Synchronisiere...",
+    "syncComplete": "Synchronisierung abgeschlossen!",
+    "syncFailed": "Synchronisierung fehlgeschlagen: {{error}}",
+    "videoError": "Video-Fehler: {{error}}",
+    "loggedIn": "Erfolgreich angemeldet!"
+  }
+}

@@ -1,21 +1,29 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import Hls from 'hls.js'
 import { useMediaList, useSubtitleSegments } from './hooks/useMedia'
 import SubtitleSidebar from './components/SubtitleSidebar'
 import SubtitleOverlay from './components/SubtitleOverlay'
 import NotebookView from './components/NotebookView'
+import SettingsView from './components/SettingsView'
 import LearningPanel from './components/LearningPanel'
 import QuickReview from './components/QuickReview'
 import VideoWordList from './components/VideoWordList'
+import TitleBar from './components/TitleBar'
+import LLMSetupReminder from './components/LLMSetupReminder'
+import { LLMSettingsModal } from './components/Settings/LLMSettingsModal'
 import { api } from './services/api'
+import { llmConfigStorage } from './services/llmConfigStorage'
+import appIcon from './assets/icon.png'
 import './App.css'
+import './i18n' // Initialize i18n
 
 // Mock segments for Step 3.1 & 3.2 verification
 import { MediaSource } from './services/api'
 import LibraryGrid from './components/LibraryGrid'
 
 
-import { Panel, Group as PanelGroup, Separator as PanelResizeHandle, PanelImperativeHandle } from "react-resizable-panels";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { AuthModal } from './components/Auth/AuthModal'
 import { getUser, signOut, supabase } from './services/supabase'
 import { User } from '@supabase/supabase-js'
@@ -49,13 +57,14 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-type AppView = 'library' | 'player' | 'notebook';
+type AppView = 'library' | 'player' | 'notebook' | 'settings';
 
 function App() {
+  const { t } = useTranslation();
   const [videoPath, setVideoPath] = useState<string | null>(null)
   const [currentMedia, setCurrentMedia] = useState<MediaSource | null>(null)
   const [urlInput, setUrlInput] = useState('')
-  const [message, setMessage] = useState('Select a video or paste a URL to start')
+  const [message, setMessage] = useState('')
   const [currentTime, setCurrentTime] = useState(0)
   const [isImporting, setIsImporting] = useState(false)
   // App State
@@ -81,8 +90,10 @@ function App() {
   // Auth State
   const [user, setUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isLLMSettingsOpen, setIsLLMSettingsOpen] = useState(false);
+  const [showLLMReminder, setShowLLMReminder] = useState(false);
 
-  const { data: mediaList, isLoading, refetch } = useMediaList()
+  const { refetch } = useMediaList()
   const { data: segments = [], refetch: refetchSegments } = useSubtitleSegments(currentMedia?.id || null)
 
   // Fetch review count on mount and when vocab is updated
@@ -101,6 +112,30 @@ function App() {
     const handleVocabUpdate = () => fetchReviewCount();
     window.addEventListener('vocab-updated', handleVocabUpdate);
     return () => window.removeEventListener('vocab-updated', handleVocabUpdate);
+  }, []);
+
+  // Set initial message after i18n is ready
+  useEffect(() => {
+    setMessage(t('status.selectVideo'));
+  }, [t]);
+
+  // Check LLM configuration on first load
+  useEffect(() => {
+    const checkLLMConfig = () => {
+      const configs = llmConfigStorage.getAll();
+      const dismissed = sessionStorage.getItem('llm_reminder_dismissed');
+      const hasSeenReminder = localStorage.getItem('llm_reminder_seen');
+
+      // Show reminder if: no configs, not dismissed this session, and hasn't seen before
+      if (configs.length === 0 && !dismissed && !hasSeenReminder) {
+        // Delay slightly to let the app load first
+        setTimeout(() => {
+          setShowLLMReminder(true);
+          localStorage.setItem('llm_reminder_seen', 'true');
+        }, 1000);
+      }
+    };
+    checkLLMConfig();
   }, []);
 
   // Fetch video-specific vocab count when media changes
@@ -153,7 +188,7 @@ function App() {
       console.log('Segments needing translation:', needsTranslation.length);
       if (needsTranslation.length > 0) {
         setIsTranslating(true);
-        setMessage(`🌐 翻译中... (${needsTranslation.length} 条字幕)`);
+        setMessage(t('status.translating', { count: needsTranslation.length }));
 
         try {
           await api.translateSegments(
@@ -163,10 +198,10 @@ function App() {
           );
           // Refetch segments to get translations
           refetchSegments();
-          setMessage(`✅ 翻译完成`);
+          setMessage(t('status.translationComplete'));
         } catch (error: any) {
           console.error('Translation error:', error);
-          setMessage(`❌ 翻译失败: ${error.message}`);
+          setMessage(t('status.translationFailed', { error: error.message }));
         } finally {
           setIsTranslating(false);
         }
@@ -181,7 +216,7 @@ function App() {
     // If translation is currently shown and we have segments, re-translate
     if (showTranslation && currentMedia?.id && segments.length > 0) {
       setIsTranslating(true);
-      setMessage(`🌐 正在翻译为 ${lang}...`);
+      setMessage(t('status.translatingTo', { lang }));
 
       try {
         await api.translateSegments(
@@ -190,10 +225,10 @@ function App() {
           lang
         );
         refetchSegments();
-        setMessage(`✅ 翻译完成`);
+        setMessage(t('status.translationComplete'));
       } catch (error: any) {
         console.error('Translation error:', error);
-        setMessage(`❌ 翻译失败: ${error.message}`);
+        setMessage(t('status.translationFailed', { error: error.message }));
       } finally {
         setIsTranslating(false);
       }
@@ -234,7 +269,7 @@ function App() {
     setUser(null);
     localStorage.setItem('userRole', 'guest');
     localStorage.removeItem('userId');
-    setMessage('Logged out successfully.');
+    setMessage(t('status.loggedOut'));
     setView('library'); // Reset view
     setVideoPath(null); // Stop playback
     setCurrentMedia(null);
@@ -283,7 +318,7 @@ function App() {
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
           console.error('HLS fatal error:', data);
-          setMessage(`HLS Error: ${data.details}`);
+          setMessage(t('status.hlsError', { details: data.details }));
         }
       });
 
@@ -304,21 +339,21 @@ function App() {
     if (path) {
       const protocolPath = `local-video://${encodeURIComponent(path)}`
       setVideoPath(protocolPath)
-      setMessage(`Playing local: ${path}`)
+      setMessage(t('status.playingLocal', { path }))
     }
   }
 
   const handleSelectLibraryVideo = (media: any) => {
     // If Cloud Only, trigger download
     if (media.status === 'cloud_only' && media.source_url) {
-      setMessage(`☁️ Found cloud video. Starting download...`);
+      setMessage(t('status.cloudVideoFound'));
       api.downloadMedia(media.source_url)
         .then(() => {
-          setMessage(`🚀 Download started for ${media.title}`);
+          setMessage(t('status.downloadStarted', { title: media.title }));
           // Optimistically update status to show feedback immediately?
           // refetch() will happen eventually via polling
         })
-        .catch((e: any) => setMessage(`❌ Download failed: ${e.message}`));
+        .catch((e: any) => setMessage(t('status.downloadFailed', { error: e.message })));
       return;
     }
 
@@ -329,18 +364,17 @@ function App() {
 
     if (media.source_url) {
       // Fetch the direct stream URL from backend
-      setMessage(`Resolving stream URL for: ${media.title}...`);
+      setMessage(t('status.resolvingStream', { title: media.title }));
       setCurrentMedia(media);
 
       // Check if it's a Bilibili video - needs proxy due to Referer requirements
       const isBilibili = media.source_url.includes('bilibili.com');
 
       if (isBilibili) {
-        // Use proxy endpoint for Bilibili
-        // Note: First-time playback will download the video (may take a few minutes)
-        setMessage(`⏳ Preparing Bilibili video (first time may take 1-2 minutes)...`);
-        const proxyUrl = `http://localhost:8000/media/proxy?url=${encodeURIComponent(media.source_url)}`;
-        setVideoPath(proxyUrl);
+        // Use real-time streaming endpoint for Bilibili (FFmpeg merges video+audio on-the-fly)
+        setMessage(t('status.loadingBilibili'));
+        const streamUrl = `http://localhost:8000/media/bilibili-stream?url=${encodeURIComponent(media.source_url)}`;
+        setVideoPath(streamUrl);
         return;
       }
 
@@ -355,14 +389,14 @@ function App() {
         .then(data => {
           if (data.stream_url) {
             setVideoPath(data.stream_url);
-            setMessage(`Streaming: ${media.title}`);
+            setMessage(t('status.streaming', { title: media.title }));
           } else {
-            setMessage(`Failed to resolve stream URL`);
+            setMessage(t('status.streamResolveFailed'));
           }
         })
         .catch(err => {
           console.error('Failed to get stream URL:', err);
-          setMessage(`Error: ${err.message}`);
+          setMessage(t('status.error', { error: err.message }));
         });
       return;
     }
@@ -384,19 +418,19 @@ function App() {
       }
       setVideoPath(path);
       console.log("Playing Local Path:", path);
-      setMessage(`Playing Local (Audio): ${media.title}`);
+      setMessage(t('status.playingLocalAudio', { title: media.title }));
       setCurrentMedia(media);
       return;
     }
 
     // ERROR handling
     if (media.status === 'error') {
-      setMessage(`❌ Error: ${media.error_message || 'Processing failed.'} Please delete and try again.`);
+      setMessage(t('status.processingError', { error: media.error_message || 'Processing failed.' }));
       return;
     }
 
     // Processing check
-    setMessage(`⏳ Video is ${media.status}... Please wait.`);
+    setMessage(t('status.videoProcessing', { status: media.status }));
 
     setCurrentMedia(media); // Set current media to fetch subtitles (might be empty initially)
   }
@@ -417,22 +451,22 @@ function App() {
 
     // Validate URL before proceeding
     if (!isValidUrl(url)) {
-      setMessage('❌ Invalid URL: Please enter a valid YouTube or Bilibili video link (e.g., youtube.com/watch?v=...)');
+      setMessage(t('status.invalidUrl'));
       return;
     }
 
     setIsImporting(true)
     // Instant feedback: Start background process immediately
-    setMessage('🚀 Starting background import...')
+    setMessage(t('status.startingImport'))
     try {
       await api.downloadMedia(url)
-      setMessage(`Video queued! It will appear in your Library momentarily.`)
+      setMessage(t('status.videoQueued'))
       setUrlInput('')
       // Polling will handle the rest
       refetch()
     } catch (error: any) {
       console.error('Import Error:', error)
-      setMessage(`Import Failed: ${error.response?.data?.detail || error.message}`)
+      setMessage(t('status.importFailed', { error: error.response?.data?.detail || error.message }))
     } finally {
       setIsImporting(false)
     }
@@ -480,7 +514,7 @@ function App() {
   const handleDeleteVideo = async (mediaId: string) => {
     try {
       await api.deleteMedia(mediaId);
-      setMessage('Video deleted successfully.');
+      setMessage(t('status.videoDeleted'));
       refetch(); // Refresh list to confirm sync
       // If the deleted video was playing, clear player
       if (currentMedia?.id === mediaId) {
@@ -489,7 +523,7 @@ function App() {
       }
     } catch (error) {
       console.error('Delete error', error);
-      setMessage('Failed to delete video.');
+      setMessage(t('status.deleteFailed'));
     }
   }
 
@@ -536,88 +570,103 @@ function App() {
 
   return (
     <div className="app-layout">
+      <TitleBar title="LinguaMaster" />
       <div className="main-content">
         <header>
           <div className="header-left">
             {view === 'player' && (
               <button className="back-btn" onClick={handleBackToLibrary}>
-                ← Back
+                ← {t('nav.library')}
               </button>
             )}
-            <h1>Fluent Learner v2</h1>
+            <h1><img src={appIcon} alt="" className="app-logo" />{t('app.name')}</h1>
             <nav className="main-nav">
               <button
                 className={view === 'library' || view === 'player' ? 'active' : ''}
                 onClick={() => {
                   if (view === 'player' && videoPath) {
-                    // keep player active if we click Library? No, expectation is usually to go to library list
                     handleBackToLibrary();
                   } else {
                     setView('library');
                   }
                 }}
               >
-                Library
+                {t('nav.library')}
               </button>
               <button
                 className={view === 'notebook' ? 'active' : ''}
                 onClick={() => {
-                  setVideoPath(null); // Stop video if playing
+                  setVideoPath(null);
                   setView('notebook');
                 }}
               >
-                Notebook
+                {t('nav.notebook')}
               </button>
             </nav>
           </div>
 
-          <div className="controls">
+          <div className="header-center">
             <div className="url-import-group">
               <input
                 type="text"
-                placeholder="Paste YouTube/Bilibili URL..."
+                placeholder={t('empty.urlPlaceholder')}
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 disabled={isImporting}
               />
               <button onClick={() => handleImportUrl()} disabled={isImporting || !urlInput}>
-                {isImporting ? '⚡ Importing...' : '📥 Import'}
+                {isImporting ? `⚡ ${t('empty.importing')}` : `📥 ${t('nav.import')}`}
               </button>
             </div>
-            <button className="secondary-btn" onClick={handleSelectVideo}>📂 Local</button>
+            <button className="secondary-btn" onClick={handleSelectVideo}>📂 {t('nav.local')}</button>
+          </div>
+
+          <div className="header-right">
+            {/* Settings Icon Button */}
+            <button
+              className="icon-btn settings-btn"
+              onClick={() => {
+                setVideoPath(null);
+                setView('settings');
+              }}
+              title={t('nav.settings')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
 
             {/* Auth Controls */}
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px' }}>
-                <div className="user-badge" style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+              <div className="auth-controls">
+                <div className="user-badge">
                   {user.email}
                 </div>
                 <button
-                  className="secondary-btn"
+                  className="secondary-btn sync-btn"
                   onClick={async () => {
                     try {
-                      setMessage('🔄 Syncing...');
+                      setMessage(t('status.syncing'));
                       await import('./services/syncService').then(m => m.syncService.pullFromCloud().then(() => m.syncService.pushToCloud()));
-                      setMessage('✅ Sync Complete!');
-                      refetch(); // Refresh UI
+                      setMessage(t('status.syncComplete'));
+                      refetch();
                     } catch (e: any) {
                       console.error(e);
-                      setMessage(`❌ Sync Failed: ${e.message}`);
+                      setMessage(t('status.syncFailed', { error: e.message }));
                     }
                   }}
-                  style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)' }}
                 >
                   🔄 Sync
                 </button>
-                <button className="secondary-btn" onClick={handleLogout}>Logout</button>
+                <button className="secondary-btn" onClick={handleLogout}>{t('nav.login') === 'Login' ? 'Logout' : '退出'}</button>
               </div>
             ) : (
               <button
-                className="secondary-btn"
+                className="login-btn"
                 onClick={() => setIsAuthModalOpen(true)}
-                style={{ marginLeft: '10px', background: '#6366f1', color: 'white', border: 'none' }}
               >
-                Login
+                {t('nav.login')}
               </button>
             )}
           </div>
@@ -643,7 +692,7 @@ function App() {
                     onError={(e) => {
                       const err = e.currentTarget.error;
                       console.error('Video Error:', err);
-                      setMessage(`Video Error: ${err?.message || 'Code ' + err?.code}.`);
+                      setMessage(t('status.videoError', { error: err?.message || 'Code ' + err?.code }));
                     }}
                     className="main-video"
                   />
@@ -669,6 +718,8 @@ function App() {
               </div>
             ) : view === 'notebook' ? (
               <NotebookView />
+            ) : view === 'settings' ? (
+              <SettingsView onOpenLLMSettings={() => setIsLLMSettingsOpen(true)} />
             ) : (
               <LibraryGrid
                 onSelectVideo={handleSelectLibraryVideo}
@@ -708,10 +759,6 @@ function App() {
             </ErrorBoundary>
           </div>
         </div>
-
-        <footer>
-          <p>Backend: http://localhost:8000/health | Total Media: {isLoading ? '...' : mediaList?.length || 0}</p>
-        </footer>
       </div>
 
       <AuthModal
@@ -719,7 +766,7 @@ function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={() => {
           getUser().then(setUser);
-          setMessage('Logged in successfully!');
+          setMessage(t('status.loggedIn'));
         }}
       />
 
@@ -734,6 +781,22 @@ function App() {
         onClose={() => setShowVideoWordList(false)}
         mediaId={currentMedia?.id}
         onSeek={handleSeek}
+      />
+
+      <LLMSettingsModal
+        isOpen={isLLMSettingsOpen}
+        onClose={() => setIsLLMSettingsOpen(false)}
+      />
+
+      <LLMSetupReminder
+        isOpen={showLLMReminder}
+        onClose={() => setShowLLMReminder(false)}
+        onGoToSettings={() => {
+          setShowLLMReminder(false);
+          setView('settings');
+          // Open LLM settings modal after a short delay
+          setTimeout(() => setIsLLMSettingsOpen(true), 300);
+        }}
       />
     </div>
   )

@@ -1,0 +1,136 @@
+{
+  "app": {
+    "name": "LinguaMaster"
+  },
+  "nav": {
+    "library": "Library",
+    "notebook": "Notebook",
+    "settings": "Settings",
+    "import": "Import",
+    "local": "Local",
+    "login": "Login"
+  },
+  "library": {
+    "title": "My Library",
+    "loading": "Loading Library...",
+    "noVideos": "No videos yet. Paste a URL above to import one!",
+    "videoDeleted": "Video deleted successfully"
+  },
+  "empty": {
+    "title": "Start Your Language Learning Journey",
+    "description": "Paste a YouTube link, or drag and drop a local video file",
+    "urlPlaceholder": "Paste video URL...",
+    "importBtn": "Import",
+    "importing": "Importing...",
+    "or": "or",
+    "selectLocal": "Select Local File",
+    "supported": "Supported: YouTube, Bilibili, MP4, MKV, WebM"
+  },
+  "card": {
+    "ready": "READY",
+    "error": "ERROR",
+    "cloud": "CLOUD",
+    "processing": "PROCESSING",
+    "delete": "Delete Video",
+    "confirm": "Confirm"
+  },
+  "sidebar": {
+    "transcript": "Transcript",
+    "tutor": "AI Tutor",
+    "target": "Target",
+    "showTranslation": "Show translation",
+    "explainThis": "Explain this",
+    "askQuestion": "Ask a question...",
+    "send": "Send",
+    "thinking": "Thinking..."
+  },
+  "notebook": {
+    "title": "Vocabulary Notebook",
+    "filter": "Filter",
+    "all": "All",
+    "startReview": "Start Review",
+    "noWords": "No saved words yet. Select words while watching videos to add them here.",
+    "word": "Word",
+    "translation": "Translation",
+    "context": "Context",
+    "nextReview": "Next Review",
+    "actions": "Actions",
+    "delete": "Delete"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Display Language",
+    "languageDesc": "Choose your preferred display language",
+    "llm": "LLM Configuration",
+    "llmDesc": "Configure AI model settings"
+  },
+  "progress": {
+    "downloading": "Downloading",
+    "transcribing": "Transcribing",
+    "chunking": "Splitting audio",
+    "merging": "Merging results..."
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "loading": "Loading..."
+  },
+  "llmReminder": {
+    "title": "Hey there! Let's set up your AI assistant 🎉",
+    "message": "To unlock the full learning experience, you'll need to configure an AI service first. Without it, these awesome features will take a little nap~",
+    "feature1": "Smart word translation & definitions",
+    "feature2": "Sentence grammar analysis",
+    "feature3": "Interactive AI tutor chat",
+    "feature4": "Automatic subtitle translation",
+    "note": "Don't worry, it only takes a few minutes! We support OpenAI, Claude, Gemini and more~",
+    "goToSettings": "Go to Settings",
+    "later": "Maybe Later"
+  },
+  "auth": {
+    "welcomeBack": "Welcome Back",
+    "createAccount": "Create Account",
+    "login": "Login",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "processing": "Processing...",
+    "signUpSuccess": "Sign up successful! Please check your email for confirmation."
+  },
+  "subtitleSidebar": {
+    "title": "Interactive Subtitles"
+  },
+  "status": {
+    "selectVideo": "Select a video or paste a URL to start",
+    "translating": "Translating... ({{count}} subtitles)",
+    "translationComplete": "Translation complete",
+    "translationFailed": "Translation failed: {{error}}",
+    "translatingTo": "Translating to {{lang}}...",
+    "loggedOut": "Logged out successfully",
+    "hlsError": "HLS Error: {{details}}",
+    "playingLocal": "Playing local: {{path}}",
+    "cloudVideoFound": "Found cloud video. Starting download...",
+    "downloadStarted": "Download started for {{title}}",
+    "downloadFailed": "Download failed: {{error}}",
+    "resolvingStream": "Resolving stream URL for: {{title}}...",
+    "loadingBilibili": "Loading Bilibili video...",
+    "streaming": "Streaming: {{title}}",
+    "streamResolveFailed": "Failed to resolve stream URL",
+    "error": "Error: {{error}}",
+    "playingLocalAudio": "Playing Local (Audio): {{title}}",
+    "processingError": "Error: {{error}} Please delete and try again.",
+    "videoProcessing": "Video is {{status}}... Please wait.",
+    "invalidUrl": "Invalid URL: Please enter a valid YouTube or Bilibili video link",
+    "startingImport": "Starting background import...",
+    "videoQueued": "Video queued! It will appear in your Library momentarily.",
+    "importFailed": "Import Failed: {{error}}",
+    "videoDeleted": "Video deleted successfully",
+    "deleteFailed": "Failed to delete video",
+    "syncing": "Syncing...",
+    "syncComplete": "Sync Complete!",
+    "syncFailed": "Sync Failed: {{error}}",
+    "videoError": "Video Error: {{error}}",
+    "loggedIn": "Logged in successfully!"
+  }
+}

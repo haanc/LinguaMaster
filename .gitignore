@@ -7,37 +7,88 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+dist-electron/
+release/
 *.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables - NEVER commit these
 .env
 .env.local
 .env.*.local
-cache/
-dist-electron/
-*.db
-backend/cache/
-backend/venv/
+.env.development
+.env.production
 backend/.env
-__pycache__/
-*.pyc
+backend/.env.*
 
-# Security - Never commit these
+# Database files - Contains user data
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+backend/*.sqlite*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+backend/venv/
+.venv/
+env/
+.env/
+
+# Cache
+cache/
+backend/cache/
+.cache/
+*.cache
+
+# Test files
+test_*.py
+*.test.db
+
+# Security - NEVER commit these
 *.pem
 *.key
 *.crt
+*.p12
+*.pfx
 credentials.json
 secrets.json
 .secrets/
+**/secrets/
+*.secret
+
+# API Keys and tokens
+.apim-subscription-key.txt
+*api-key*
+*apikey*
+*token*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+backend-dist/
+release/

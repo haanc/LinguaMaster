@@ -1,0 +1,295 @@
+.llm-settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.llm-settings-modal {
+  background: #1e1e2e;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.llm-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #2d2d3d;
+}
+
+.llm-settings-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #e0e0e0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-button:hover {
+  color: #fff;
+}
+
+.llm-settings-content {
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.current-status {
+  background: #2d2d3d;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.status-label {
+  color: #888;
+  margin-right: 8px;
+}
+
+.status-value {
+  color: #4ade80;
+  font-weight: 500;
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #252535;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.empty-state {
+  background: #252535;
+  border: 1px dashed #3d3d4d;
+  border-radius: 8px;
+  padding: 40px 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.empty-state p {
+  margin: 0 0 8px 0;
+  color: #888;
+  font-size: 14px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.empty-state p:last-child {
+  margin-bottom: 0;
+}
+
+.config-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.config-info input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #6366f1;
+}
+
+.config-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.config-name {
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.config-provider {
+  color: #888;
+  font-size: 12px;
+}
+
+.config-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.config-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.test-button {
+  background: #3d3d4d;
+  color: #e0e0e0;
+}
+
+.test-button:hover {
+  background: #4d4d5d;
+}
+
+.test-button.testing {
+  background: #6366f1;
+  color: white;
+}
+
+.test-button.success {
+  background: #22c55e;
+  color: white;
+}
+
+.test-button.error {
+  background: #ef4444;
+  color: white;
+}
+
+.edit-button {
+  background: #3d3d4d;
+  color: #e0e0e0;
+}
+
+.edit-button:hover {
+  background: #6366f1;
+  color: white;
+}
+
+.delete-button {
+  background: #3d3d4d;
+  color: #e0e0e0;
+}
+
+.delete-button:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.add-button {
+  width: 100%;
+  padding: 14px;
+  background: #3d3d4d;
+  border: none;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.add-button:hover {
+  background: #6366f1;
+  color: white;
+}
+
+.config-form {
+  background: #252535;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.config-form h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #e0e0e0;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #888;
+  font-size: 13px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  background: #1e1e2e;
+  border: 1px solid #3d3d4d;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.form-group input::placeholder {
+  color: #666;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cancel-button,
+.save-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.cancel-button {
+  background: #3d3d4d;
+  color: #e0e0e0;
+}
+
+.cancel-button:hover {
+  background: #4d4d5d;
+}
+
+.save-button {
+  background: #6366f1;
+  color: white;
+}
+
+.save-button:hover {
+  background: #5558e3;
+}

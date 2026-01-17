@@ -3,16 +3,25 @@ AI Service Module
 Provides high-level AI functionality using abstracted providers.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 
 # Provider imports
 from ai.providers import get_whisper_provider, WhisperProvider
 from ai.config import get_config
+from chunked_transcription import transcribe_audio_chunked, TranscriptionProgress
 
 # LangChain imports
 try:
-    from ai.chains import get_dictionary_chain, get_context_chain, get_augmented_dictionary_chain
+    from ai.chains import (
+        get_dictionary_chain,
+        get_context_chain,
+        get_augmented_dictionary_chain,
+        get_dictionary_chain_with_llm,
+        get_context_chain_with_llm,
+        get_augmented_dictionary_chain_with_llm,
+    )
     from ai.graph import create_tutor_graph
+    from ai.providers.llm import LLMProvider
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     print("WARN: LangChain dependencies not found. AI features may be limited.")
@@ -55,19 +64,37 @@ class AIService:
     def whisper_provider(self) -> Optional[WhisperProvider]:
         return self._whisper_provider
 
-    def transcribe_audio(self, audio_path: str) -> List[Dict[str, Any]]:
+    def transcribe_audio(
+        self,
+        audio_path: str,
+        progress_callback: Optional[Callable[[TranscriptionProgress], None]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Transcribes the given audio file using the configured Whisper provider.
+        Automatically handles long audio by chunking.
         Returns a list of segment dictionaries compatible with SubtitleSegment.
+
+        Args:
+            audio_path: Path to the audio file
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            List of segment dictionaries
         """
         if not self._whisper_provider:
             raise ValueError("Whisper provider not initialized. Check your .env configuration.")
 
         print(f"Transcribing: {audio_path}")
-        segments = self._whisper_provider.transcribe(audio_path)
 
-        # Convert to dict format for API compatibility
-        return [seg.to_dict() for seg in segments]
+        # Use chunked transcription for automatic handling of long audio
+        segments = transcribe_audio_chunked(
+            audio_path,
+            self._whisper_provider,
+            progress_callback
+        )
+
+        print(f"Transcription complete: {len(segments)} segments")
+        return segments
 
     def lookup_word(
         self,
@@ -170,6 +197,104 @@ class AIService:
         except Exception as e:
             print(f"Error in chat_with_tutor: {e}")
             return {"error": str(e)}
+
+    # =========================================================================
+    # Provider-Injected Methods (for user-configured LLM)
+    # =========================================================================
+
+    def lookup_word_with_provider(
+        self,
+        word: str,
+        context_sentence: str,
+        target_language: str,
+        sentence_translation: Optional[str],
+        llm_provider: "LLMProvider",
+    ) -> Dict[str, Any]:
+        """
+        Analyzes a word in context using an externally provided LLM provider.
+        """
+        llm = llm_provider.get_chat_model(temperature=0.3)
+
+        if sentence_translation:
+            try:
+                chain = get_augmented_dictionary_chain_with_llm(llm)
+                result = chain.invoke({
+                    "word": word,
+                    "context_sentence": context_sentence,
+                    "sentence_translation": sentence_translation,
+                    "target_language": target_language,
+                })
+                result_dict = result.model_dump()
+                result_dict["translation"] = result_dict.pop("word_translation", sentence_translation)
+                return result_dict
+            except Exception as e:
+                print(f"Error in augmented lookup_word: {e}, falling back to full chain")
+
+        try:
+            chain = get_dictionary_chain_with_llm(llm)
+            result = chain.invoke({
+                "word": word,
+                "context_sentence": context_sentence,
+                "target_language": target_language,
+            })
+            return result.model_dump()
+        except Exception as e:
+            print(f"Error in lookup_word_with_provider: {e}")
+            return {"error": str(e)}
+
+    def explain_context_with_provider(
+        self,
+        subtitle_text: str,
+        target_language: str,
+        llm_provider: "LLMProvider",
+    ) -> Dict[str, Any]:
+        """
+        Explains grammar/culture using an externally provided LLM provider.
+        """
+        try:
+            llm = llm_provider.get_chat_model(temperature=0.7)
+            chain = get_context_chain_with_llm(llm)
+            result = chain.invoke({
+                "subtitle_text": subtitle_text,
+                "target_language": target_language,
+            })
+            return result.model_dump()
+        except Exception as e:
+            print(f"Error in explain_context_with_provider: {e}")
+            return {"error": str(e)}
+
+    def chat_with_tutor_with_provider(
+        self,
+        messages: List[Dict[str, str]],
+        context_text: Optional[str],
+        target_language: str,
+        llm_provider: "LLMProvider",
+    ) -> Dict[str, Any]:
+        """
+        Runs the tutor workflow using an externally provided LLM provider.
+
+        IMPORTANT: This method currently does NOT use the provided llm_provider.
+        The tutor chat feature uses a LangGraph workflow that is not yet compatible
+        with dynamic LLM injection. User-configured LLM settings are ignored for
+        this endpoint.
+
+        Args:
+            messages: Conversation history
+            context_text: Optional context text for the tutor to reference
+            target_language: Target language for responses
+            llm_provider: User's configured LLM provider (currently ignored)
+
+        Returns:
+            Tutor response dictionary
+
+        TODO: Implement create_tutor_graph_with_llm() to support user-configured LLM
+        """
+        # Log a warning so developers are aware of the limitation
+        print(f"WARNING: chat_with_tutor_with_provider ignores user LLM config. "
+              f"Using server default instead of {llm_provider.name}")
+
+        # Fall back to default tutor graph which uses server-configured LLM
+        return self.chat_with_tutor(messages, context_text, target_language)
 
     def translate_batch(
         self,

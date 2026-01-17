@@ -1,0 +1,50 @@
+# Environment variables - NEVER commit
+.env
+.env.*
+!.env.example
+
+# Database files - Contains user data
+*.db
+*.sqlite
+*.sqlite3
+
+# Python virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Cache directories
+cache/
+.cache/
+
+# Logs
+*.log
+logs/
+
+# Test files with sensitive data
+test_*.db
+*.test.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Security
+*.pem
+*.key
+*.crt
+credentials.json
+secrets.json
+
+# Audio test files
+test_audio.mp3

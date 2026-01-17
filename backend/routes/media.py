@@ -16,6 +16,7 @@ from models import MediaSource, SubtitleSegment
 from media_service import media_service
 from ai_service import ai_service
 from translation_cache import get_translation_cache
+from chunked_transcription import TranscriptionProgress
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -42,9 +43,47 @@ def get_current_owner(x_owner_id: str = Header(default="guest")) -> str:
 def background_download_and_process(url: str, media_id_str: str):
     """
     Handles metadata fetch, download, and AI processing pipeline.
-    Updates the existing MediaSource entry.
+    Updates the existing MediaSource entry with progress updates.
     """
     media_id = UUID(media_id_str)
+
+    def update_progress(progress: TranscriptionProgress):
+        """Callback to update transcription progress in database."""
+        with Session(engine) as progress_db:
+            media = progress_db.get(MediaSource, media_id)
+            if media:
+                if progress.status == "chunking":
+                    media.status = f"chunking ({progress.total_chunks} parts)"
+                    media.progress = 0
+                    media.progress_message = f"chunking:{progress.total_chunks}"
+                elif progress.status == "transcribing":
+                    media.status = f"transcribing ({progress.completed_chunks}/{progress.total_chunks})"
+                    media.progress = int(progress.completed_chunks / progress.total_chunks * 100) if progress.total_chunks > 0 else 0
+                    media.progress_message = f"transcribing:{progress.completed_chunks}/{progress.total_chunks}"
+                elif progress.status == "merging":
+                    media.status = "merging"
+                    media.progress = 95
+                    media.progress_message = "merging"
+                elif progress.status == "done":
+                    media.progress = 100
+                    media.progress_message = None
+                elif progress.status == "error":
+                    media.status = "error"
+                    media.error_message = progress.message
+                    media.progress = 0
+                    media.progress_message = None
+                progress_db.add(media)
+                progress_db.commit()
+
+    def update_download_progress(percent: int, message: str):
+        """Callback to update download progress in database."""
+        with Session(engine) as progress_db:
+            media = progress_db.get(MediaSource, media_id)
+            if media:
+                media.progress = percent
+                media.progress_message = message
+                progress_db.add(media)
+                progress_db.commit()
 
     with Session(engine) as db:
         try:
@@ -73,8 +112,13 @@ def background_download_and_process(url: str, media_id_str: str):
 
             # 2. Download Audio
             print(f"DEBUG: Starting audio download for {media.id}...")
+            media.progress = 0
+            media.progress_message = "downloading"
+            db.add(media)
+            db.commit()
+
             try:
-                local_path = media_service.download_audio(url)
+                local_path = media_service.download_audio(url, progress_callback=update_download_progress)
             except Exception as e:
                 media.status = "error"
                 media.error_message = f"Download Failed: {str(e)}"
@@ -84,19 +128,24 @@ def background_download_and_process(url: str, media_id_str: str):
 
             media.file_path = local_path
             media.status = "transcribing"
+            media.progress = 0
+            media.progress_message = "transcribing"
             db.add(media)
             db.commit()
 
             print(f"DEBUG: Audio ready: {local_path}")
 
-            # 3. Transcribe with Whisper
+            # 3. Transcribe with Whisper (with chunking for long audio)
             try:
                 print(f"DEBUG: Transcribing audio...")
 
                 if not db.get(MediaSource, media_id):
                     return
 
-                segments_data = ai_service.transcribe_audio(local_path)
+                segments_data = ai_service.transcribe_audio(
+                    local_path,
+                    progress_callback=update_progress
+                )
                 print(f"DEBUG: Transcription complete. {len(segments_data)} segments.")
 
                 for seg in segments_data:
@@ -110,6 +159,8 @@ def background_download_and_process(url: str, media_id_str: str):
                     db.add(db_seg)
 
                 media.status = "ready"
+                media.progress = 100
+                media.progress_message = None
                 db.add(media)
                 db.commit()
 
@@ -117,6 +168,8 @@ def background_download_and_process(url: str, media_id_str: str):
                 print(f"Error in processing pipeline: {e}")
                 media.status = "error"
                 media.error_message = f"Processing failed: {str(e)}"
+                media.progress = 0
+                media.progress_message = None
                 db.add(media)
                 db.commit()
 
@@ -127,6 +180,20 @@ def background_download_and_process(url: str, media_id_str: str):
 def background_transcribe_only(audio_path: str, media_id_str: str):
     """Transcribe audio only (for re-triggering stuck jobs)."""
     media_id = UUID(media_id_str)
+
+    def update_progress(progress: TranscriptionProgress):
+        """Callback to update transcription progress in database."""
+        with Session(engine) as progress_db:
+            media = progress_db.get(MediaSource, media_id)
+            if media:
+                if progress.status == "chunking":
+                    media.status = f"chunking ({progress.total_chunks} parts)"
+                elif progress.status == "transcribing":
+                    media.status = f"transcribing ({progress.completed_chunks}/{progress.total_chunks})"
+                elif progress.status == "merging":
+                    media.status = "merging"
+                progress_db.add(media)
+                progress_db.commit()
 
     with Session(engine) as db:
         try:
@@ -140,7 +207,10 @@ def background_transcribe_only(audio_path: str, media_id_str: str):
             db.add(media)
             db.commit()
 
-            segments_data = ai_service.transcribe_audio(audio_path)
+            segments_data = ai_service.transcribe_audio(
+                audio_path,
+                progress_callback=update_progress
+            )
             print(f"DEBUG: Transcription complete. {len(segments_data)} segments.")
 
             for seg in segments_data:

@@ -29,15 +29,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px 0;
-    margin-bottom: 24px;
+    padding: 24px 24px;
+    margin: 0 -24px 24px -24px;
     position: sticky;
     top: 0;
     z-index: 1000;
     /* Ensure it stays on top of everything */
     padding-top: 10px;
     /* Glassmorphism Effect */
-    background: rgba(18, 18, 18, 0.85);
+    background: rgba(18, 18, 18, 0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -195,6 +195,43 @@
 .delete-btn:hover {
     background: #ef4444;
     color: white;
+}
+
+/* Confirm Actions */
+.confirm-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.confirm-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.confirm-btn:hover {
+    background: #dc2626;
+}
+
+.cancel-btn {
+    background: #475569;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+    background: #334155;
 }
 
 /* Translation & Context */

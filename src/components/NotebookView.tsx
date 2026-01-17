@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, SavedWord } from '../services/api';
+import { LANGUAGE_NAMES } from '../i18n/languages';
 import './NotebookView.css';
 
-const LANGUAGES = ["All", "English", "French", "Spanish", "German", "Chinese", "Japanese"];
+// Include "All" for filter purposes
+const FILTER_LANGUAGES = ["All", ...LANGUAGE_NAMES];
 
 const NotebookView: React.FC = () => {
+    const { t } = useTranslation();
     const [words, setWords] = useState<SavedWord[]>([]);
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState<'list' | 'review'>('list');
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
     // Filters
     const [filterLanguage, setFilterLanguage] = useState('All');
@@ -86,10 +91,9 @@ const NotebookView: React.FC = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('Delete this word?')) {
-            await api.deleteSavedWord(id);
-            setWords(words.filter(w => w.id !== id));
-        }
+        await api.deleteSavedWord(id);
+        setWords(words.filter(w => w.id !== id));
+        setConfirmingId(null);
     };
 
     // --- RENDER HELPERS ---
@@ -146,26 +150,26 @@ const NotebookView: React.FC = () => {
             {mode === 'review' ? renderReviewCard() : (
                 <>
                     <div className="notebook-header">
-                        <h2>📚 Smart Vocabulary Notebook</h2>
+                        <h2>📚 {t('notebook.title')}</h2>
                         <div className="notebook-controls">
                             <select
                                 value={filterLanguage}
                                 onChange={(e) => setFilterLanguage(e.target.value)}
                                 className="lang-filter"
                             >
-                                {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                                {FILTER_LANGUAGES.map(l => <option key={l} value={l}>{l === 'All' ? t('notebook.all') : l}</option>)}
                             </select>
                             <button className="review-btn" onClick={startReview}>
-                                ▶ Start Review
+                                ▶ {t('notebook.startReview')}
                             </button>
                         </div>
                     </div>
 
                     {loading ? (
-                        <p>Loading...</p>
+                        <p>{t('common.loading')}</p>
                     ) : (
                         <div className="vocab-grid">
-                            {words.length === 0 && <p className="empty-state">No words found.</p>}
+                            {words.length === 0 && <p className="empty-state">{t('notebook.noWords')}</p>}
                             {words.map(w => (
                                 <div key={w.id} className="vocab-card">
                                     <div className="vocab-word-row">
@@ -173,14 +177,36 @@ const NotebookView: React.FC = () => {
                                             <span className="vocab-word">{w.word}</span>
                                             {w.language && <span className="lang-tag">{w.language}</span>}
                                         </div>
-                                        <button className="delete-btn" onClick={() => handleDelete(w.id)}>×</button>
+                                        {confirmingId === w.id ? (
+                                            <div className="confirm-actions">
+                                                <button
+                                                    className="confirm-btn"
+                                                    onClick={() => handleDelete(w.id)}
+                                                >
+                                                    {t('card.confirm')}
+                                                </button>
+                                                <button
+                                                    className="cancel-btn"
+                                                    onClick={() => setConfirmingId(null)}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                className="delete-btn"
+                                                onClick={() => setConfirmingId(w.id)}
+                                            >
+                                                ×
+                                            </button>
+                                        )}
                                     </div>
                                     {w.translation && <div className="vocab-trans">{w.translation}</div>}
                                     {w.context_sentence && (
                                         <div className="vocab-context">"{w.context_sentence}"</div>
                                     )}
                                     <div className="vocab-meta">
-                                        Next Review: {new Date(w.next_review_at || w.created_at).toLocaleDateString()}
+                                        {t('notebook.nextReview')}: {new Date(w.next_review_at || w.created_at).toLocaleDateString()}
                                     </div>
                                 </div>
                             ))}

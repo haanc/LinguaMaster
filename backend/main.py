@@ -1,6 +1,7 @@
 """
 Fluent Learner V2 - Backend API
 Main application entry point with route registration.
+# Force reload - httpx event hooks
 """
 
 import os
