@@ -1,10 +1,12 @@
 # Prepare Backend for Packaging
-# This script creates a portable Python environment with all dependencies
+# This script creates a portable Python environment using Python Embeddable
+# The embeddable version is fully self-contained and works on any Windows machine
 
 param(
     [switch]$Clean,
     [switch]$IncludeWhisperModel,
-    [string]$WhisperModel = "base"  # tiny, base, small, medium, large-v3
+    [string]$WhisperModel = "base",  # tiny, base, small, medium, large-v3
+    [string]$PythonVersion = "3.12.4"
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,11 +22,13 @@ if (-not $ProjectRoot -or -not (Test-Path $ProjectRoot)) {
 $BackendDir = Join-Path $ProjectRoot "backend"
 $PackagedBackendDir = Join-Path $ProjectRoot "backend-dist"
 $VenvDir = Join-Path $BackendDir "venv"
+$EmbeddableDir = Join-Path $PackagedBackendDir "python"
 
 Write-Host "=== LinguaMaster Backend Packager ===" -ForegroundColor Cyan
 Write-Host "Project Root: $ProjectRoot"
 Write-Host "Backend Dir: $BackendDir"
 Write-Host "Output Dir: $PackagedBackendDir"
+Write-Host "Python Version: $PythonVersion"
 
 # Clean if requested
 if ($Clean -and (Test-Path $PackagedBackendDir)) {
@@ -35,8 +39,76 @@ if ($Clean -and (Test-Path $PackagedBackendDir)) {
 # Create output directory
 New-Item -ItemType Directory -Force -Path $PackagedBackendDir | Out-Null
 
-# Step 1: Copy Python source files (excluding sensitive data)
-Write-Host "`n[1/4] Copying Python source files..." -ForegroundColor Green
+# Step 1: Download Python Embeddable
+Write-Host "`n[1/5] Downloading Python Embeddable $PythonVersion..." -ForegroundColor Green
+
+$PythonZipUrl = "https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-embed-amd64.zip"
+$PythonZipPath = Join-Path $env:TEMP "python-embed.zip"
+
+if (-not (Test-Path $EmbeddableDir)) {
+    Write-Host "  Downloading from: $PythonZipUrl"
+    Invoke-WebRequest -Uri $PythonZipUrl -OutFile $PythonZipPath -UseBasicParsing
+
+    Write-Host "  Extracting..."
+    New-Item -ItemType Directory -Force -Path $EmbeddableDir | Out-Null
+    Expand-Archive -Path $PythonZipPath -DestinationPath $EmbeddableDir -Force
+    Remove-Item $PythonZipPath -Force
+
+    # Enable site-packages by modifying python312._pth
+    $PthFile = Get-ChildItem $EmbeddableDir -Filter "python*._pth" | Select-Object -First 1
+    if ($PthFile) {
+        $PthContent = Get-Content $PthFile.FullName
+        # Uncomment import site
+        $PthContent = $PthContent -replace "^#import site", "import site"
+        # Add Lib\site-packages
+        $PthContent += "Lib\site-packages"
+        Set-Content -Path $PthFile.FullName -Value $PthContent
+        Write-Host "  Enabled site-packages in $($PthFile.Name)"
+    }
+
+    Write-Host "  Downloaded Python Embeddable"
+} else {
+    Write-Host "  Python Embeddable already exists, skipping download"
+}
+
+# Step 2: Install pip in embeddable Python
+Write-Host "`n[2/5] Installing pip..." -ForegroundColor Green
+
+$PythonExe = Join-Path $EmbeddableDir "python.exe"
+$PipPath = Join-Path $EmbeddableDir "Scripts\pip.exe"
+$SitePackagesDir = Join-Path $EmbeddableDir "Lib\site-packages"
+
+if (-not (Test-Path $PipPath)) {
+    # Download get-pip.py
+    $GetPipUrl = "https://bootstrap.pypa.io/get-pip.py"
+    $GetPipPath = Join-Path $env:TEMP "get-pip.py"
+
+    Write-Host "  Downloading get-pip.py..."
+    Invoke-WebRequest -Uri $GetPipUrl -OutFile $GetPipPath -UseBasicParsing
+
+    Write-Host "  Installing pip..."
+    & $PythonExe $GetPipPath --no-warn-script-location
+    Remove-Item $GetPipPath -Force
+
+    Write-Host "  Pip installed"
+} else {
+    Write-Host "  Pip already installed, skipping"
+}
+
+# Step 3: Install dependencies
+Write-Host "`n[3/5] Installing Python dependencies..." -ForegroundColor Green
+
+$RequirementsPath = Join-Path $BackendDir "requirements.txt"
+if (Test-Path $RequirementsPath) {
+    Write-Host "  Installing from requirements.txt (this may take several minutes)..."
+    & $PythonExe -m pip install -r $RequirementsPath --no-warn-script-location --quiet
+    Write-Host "  Dependencies installed"
+} else {
+    Write-Host "  WARNING: requirements.txt not found at $RequirementsPath" -ForegroundColor Yellow
+}
+
+# Step 4: Copy Python source files
+Write-Host "`n[4/5] Copying Python source files..." -ForegroundColor Green
 
 $SourceFiles = @(
     "main.py",
@@ -73,47 +145,10 @@ foreach ($dir in $SourceDirs) {
     }
 }
 
-# Step 2: Copy Python virtual environment
-Write-Host "`n[2/4] Copying Python virtual environment..." -ForegroundColor Green
+# Step 5: Create launcher script and config
+Write-Host "`n[5/5] Creating configuration and launcher..." -ForegroundColor Green
 
-$VenvDest = Join-Path $PackagedBackendDir "venv"
-if (Test-Path $VenvDir) {
-    # Copy only necessary parts of venv
-    New-Item -ItemType Directory -Force -Path $VenvDest | Out-Null
-
-    # Copy Scripts (python.exe, pip, etc.)
-    $ScriptsSrc = Join-Path $VenvDir "Scripts"
-    $ScriptsDest = Join-Path $VenvDest "Scripts"
-    Copy-Item $ScriptsSrc $ScriptsDest -Recurse -Force
-    Write-Host "  Copied: venv/Scripts"
-
-    # Copy Lib/site-packages (all installed packages)
-    $LibSrc = Join-Path $VenvDir "Lib"
-    $LibDest = Join-Path $VenvDest "Lib"
-    Copy-Item $LibSrc $LibDest -Recurse -Force
-    Write-Host "  Copied: venv/Lib (this may take a while...)"
-
-    # Copy pyvenv.cfg
-    $PyvenvCfg = Join-Path $VenvDir "pyvenv.cfg"
-    if (Test-Path $PyvenvCfg) {
-        Copy-Item $PyvenvCfg $VenvDest -Force
-    }
-
-    # Clean up __pycache__ in site-packages
-    Get-ChildItem $LibDest -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-
-    # Remove .pyc files
-    Get-ChildItem $LibDest -Recurse -Filter "*.pyc" | Remove-Item -Force -ErrorAction SilentlyContinue
-
-    Write-Host "  Cleaned cache files"
-} else {
-    Write-Host "  WARNING: Virtual environment not found at $VenvDir" -ForegroundColor Yellow
-    Write-Host "  Please run: cd backend && python -m venv venv && venv\Scripts\pip install -r requirements.txt"
-}
-
-# Step 3: Create .env.example (empty template)
-Write-Host "`n[3/4] Creating configuration template..." -ForegroundColor Green
-
+# Create .env.example
 $EnvExample = @"
 # LinguaMaster Backend Configuration
 # Copy this file to .env and fill in your values
@@ -136,32 +171,44 @@ LOCAL_WHISPER_COMPUTE_TYPE=auto
 $EnvExample | Out-File -FilePath (Join-Path $PackagedBackendDir ".env.example") -Encoding utf8
 Write-Host "  Created: .env.example"
 
-# Step 4: Pre-download Whisper model (optional)
+# Create a simple batch launcher for debugging
+$LauncherBat = @"
+@echo off
+cd /d "%~dp0"
+python\python.exe main.py
+pause
+"@
+
+$LauncherBat | Out-File -FilePath (Join-Path $PackagedBackendDir "start-backend.bat") -Encoding ascii
+Write-Host "  Created: start-backend.bat (for debugging)"
+
+# Optional: Pre-download Whisper model
 if ($IncludeWhisperModel) {
-    Write-Host "`n[4/4] Pre-downloading Whisper model: $WhisperModel..." -ForegroundColor Green
+    Write-Host "`n[Bonus] Pre-downloading Whisper model: $WhisperModel..." -ForegroundColor Green
 
     $ModelsDir = Join-Path $PackagedBackendDir "whisper-models"
     New-Item -ItemType Directory -Force -Path $ModelsDir | Out-Null
 
-    # Use the venv's Python to download the model
-    $PythonExe = Join-Path $VenvDir "Scripts\python.exe"
-
     $DownloadScript = @"
 from faster_whisper import WhisperModel
 import sys
-model = WhisperModel('$WhisperModel', device='cpu', download_root='$($ModelsDir -replace '\\', '/')')
-print(f'Model {sys.argv[1] if len(sys.argv) > 1 else "$WhisperModel"} downloaded successfully')
+model = WhisperModel('$WhisperModel', device='cpu', download_root=r'$ModelsDir')
+print(f'Model downloaded successfully')
 "@
 
     $TempScript = Join-Path $env:TEMP "download_whisper.py"
     $DownloadScript | Out-File -FilePath $TempScript -Encoding utf8
 
-    & $PythonExe $TempScript $WhisperModel
+    & $PythonExe $TempScript
+    Remove-Item $TempScript -Force
 
     Write-Host "  Downloaded: $WhisperModel model"
-} else {
-    Write-Host "`n[4/4] Skipping Whisper model pre-download (will download on first use)" -ForegroundColor Yellow
 }
+
+# Clean up __pycache__ in site-packages
+Write-Host "`nCleaning up cache files..." -ForegroundColor Yellow
+Get-ChildItem $EmbeddableDir -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+Get-ChildItem $EmbeddableDir -Recurse -Filter "*.pyc" | Remove-Item -Force -ErrorAction SilentlyContinue
 
 # Calculate size
 $Size = (Get-ChildItem $PackagedBackendDir -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
@@ -169,6 +216,14 @@ $Size = (Get-ChildItem $PackagedBackendDir -Recurse | Measure-Object -Property L
 Write-Host "`n=== Backend Packaging Complete ===" -ForegroundColor Cyan
 Write-Host "Output: $PackagedBackendDir"
 Write-Host "Size: $([math]::Round($Size, 2)) MB"
+Write-Host ""
+Write-Host "Structure:" -ForegroundColor Yellow
+Write-Host "  backend-dist/"
+Write-Host "    python/           <- Portable Python $PythonVersion"
+Write-Host "    ai/               <- AI modules"
+Write-Host "    routes/           <- API routes"
+Write-Host "    main.py           <- Entry point"
+Write-Host "    start-backend.bat <- Debug launcher"
 Write-Host ""
 Write-Host "Files excluded from package:" -ForegroundColor Yellow
 Write-Host "  - .env (environment variables)"

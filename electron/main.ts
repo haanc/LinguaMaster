@@ -117,8 +117,9 @@ function startPythonBackend() {
   }
 
   // In production, backend is in resources/backend-dist
+  // Uses Python Embeddable (portable, no venv path issues)
   const backendDir = path.join(process.resourcesPath, 'backend-dist')
-  const pythonPath = path.join(backendDir, 'venv', 'Scripts', 'python.exe')
+  const pythonPath = path.join(backendDir, 'python', 'python.exe')
   const scriptPath = path.join(backendDir, 'main.py')
 
   // Set environment variables for the backend
