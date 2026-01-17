@@ -261,7 +261,8 @@ class DeepSeekLLMProvider(LLMProvider):
     def __init__(self, api_key: str, model_name: str = "deepseek-chat", base_url: Optional[str] = None):
         self.api_key = api_key
         self.model_name = model_name
-        self.base_url = base_url or self.DEFAULT_BASE_URL
+        # Validate custom URL to prevent SSRF attacks
+        self.base_url = validate_base_url(base_url) if base_url else self.DEFAULT_BASE_URL
 
     @property
     def name(self) -> str:
@@ -286,7 +287,8 @@ class QwenLLMProvider(LLMProvider):
     def __init__(self, api_key: str, model_name: str = "qwen-plus", base_url: Optional[str] = None):
         self.api_key = api_key
         self.model_name = model_name
-        self.base_url = base_url or self.DEFAULT_BASE_URL
+        # Validate custom URL to prevent SSRF attacks
+        self.base_url = validate_base_url(base_url) if base_url else self.DEFAULT_BASE_URL
 
     @property
     def name(self) -> str:

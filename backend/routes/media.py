@@ -254,10 +254,17 @@ def list_media(
 
 
 @router.get("/{media_id}", response_model=MediaSource)
-def get_media(media_id: UUID, session: Session = Depends(get_session)):
+def get_media(
+    media_id: UUID,
+    session: Session = Depends(get_session),
+    owner_id: str = Depends(get_current_owner),
+):
     media = session.get(MediaSource, media_id)
     if not media:
         raise HTTPException(status_code=404, detail="Media not found")
+    # Authorization check: ensure user owns this media
+    if media.owner_id != owner_id:
+        raise HTTPException(status_code=403, detail="Access denied")
     return media
 
 
@@ -330,10 +337,18 @@ def retranscribe_media(
 
 
 @router.delete("/{media_id}")
-def delete_media(media_id: UUID, session: Session = Depends(get_session)):
+def delete_media(
+    media_id: UUID,
+    session: Session = Depends(get_session),
+    owner_id: str = Depends(get_current_owner),
+):
     media = session.get(MediaSource, media_id)
     if not media:
         raise HTTPException(status_code=404, detail="Media not found")
+
+    # Authorization check: ensure user owns this media
+    if media.owner_id != owner_id:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     # Delete local files
     if media.file_path and os.path.exists(media.file_path):

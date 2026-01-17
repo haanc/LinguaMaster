@@ -62,8 +62,11 @@ if (-not (Test-Path $EmbeddableDir)) {
         $PthContent = $PthContent -replace "^#import site", "import site"
         # Add Lib\site-packages
         $PthContent += "Lib\site-packages"
+        # Add parent directory (backend-dist) to allow importing local modules
+        $PthContent += ".."
         Set-Content -Path $PthFile.FullName -Value $PthContent
         Write-Host "  Enabled site-packages in $($PthFile.Name)"
+        Write-Host "  Added parent directory (..) to Python path"
     }
 
     Write-Host "  Downloaded Python Embeddable"

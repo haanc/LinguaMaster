@@ -32,7 +32,26 @@ function registerLocalProtocol() {
       let pathPart = request.url.slice('local-video://'.length)
       const filePath = decodeURIComponent(pathPart)
 
-      const stat = fs.statSync(filePath)
+      // Security: Validate file path to prevent path traversal attacks
+      const normalizedPath = path.normalize(filePath)
+      const allowedExtensions = ['.mp4', '.mkv', '.avi', '.webm', '.mov', '.mp3', '.wav', '.ogg']
+      const ext = path.extname(normalizedPath).toLowerCase()
+
+      if (!allowedExtensions.includes(ext)) {
+        console.error('Local Video: Invalid file extension:', ext)
+        return new Response('Forbidden', { status: 403 })
+      }
+
+      // Ensure the file exists and is a file (not a directory)
+      if (!fs.existsSync(normalizedPath)) {
+        return new Response('Not Found', { status: 404 })
+      }
+
+      const stat = fs.statSync(normalizedPath)
+      if (!stat.isFile()) {
+        return new Response('Not Found', { status: 404 })
+      }
+
       const fileSize = stat.size
       const range = request.headers.get('Range')
 
@@ -42,7 +61,7 @@ function registerLocalProtocol() {
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1
         const chunksize = (end - start) + 1
 
-        const file = fs.createReadStream(filePath, { start, end })
+        const file = fs.createReadStream(normalizedPath, { start, end })
         // @ts-ignore
         const stream = Readable.toWeb(file)
 
@@ -56,7 +75,7 @@ function registerLocalProtocol() {
           }
         })
       } else {
-        const file = fs.createReadStream(filePath)
+        const file = fs.createReadStream(normalizedPath)
         // @ts-ignore
         const stream = Readable.toWeb(file)
         return new Response(stream as any, {
@@ -179,7 +198,7 @@ function createWindow() {
     titleBarStyle: 'hidden', // Fallback for macOS
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
-      webSecurity: false, // Allow cross-origin requests in dev mode
+      webSecurity: true, // Enable security - backend CORS handles cross-origin
       spellcheck: false, // Disable spellcheck
     },
   })

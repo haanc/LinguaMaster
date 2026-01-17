@@ -85,6 +85,7 @@ def review_word(
     word_id: UUID,
     req: ReviewRequest,
     session: Session = Depends(get_session),
+    owner_id: str = Depends(get_current_owner),
 ):
     """
     Review a vocabulary word using SM-2 spaced repetition algorithm.
@@ -96,6 +97,10 @@ def review_word(
     word = session.get(SavedWord, word_id)
     if not word:
         raise HTTPException(status_code=404, detail="Word not found")
+
+    # Authorization check: ensure user owns this word
+    if word.owner_id != owner_id:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     q = req.quality
 
@@ -134,11 +139,18 @@ def review_word(
 
 
 @router.delete("/{word_id}")
-def delete_saved_word(word_id: UUID, session: Session = Depends(get_session)):
+def delete_saved_word(
+    word_id: UUID,
+    session: Session = Depends(get_session),
+    owner_id: str = Depends(get_current_owner),
+):
     """Delete a saved vocabulary word."""
     word = session.get(SavedWord, word_id)
     if not word:
         raise HTTPException(status_code=404, detail="Word not found")
+    # Authorization check: ensure user owns this word
+    if word.owner_id != owner_id:
+        raise HTTPException(status_code=403, detail="Access denied")
     session.delete(word)
     session.commit()
     return {"message": "Word deleted"}
