@@ -31,6 +31,8 @@ app.commandLine.appendSwitch('disable-component-update')
 
 let win: BrowserWindow | null
 let pyProcess: ChildProcess | null = null
+let backendStatus: 'not_started' | 'starting' | 'ready' | 'error' = 'not_started'
+let backendError: string | null = null
 
 // Register local protocol for videos
 function registerLocalProtocol() {
@@ -150,6 +152,38 @@ function handleIpc() {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
   })
+
+  // Backend status handler
+  ipcMain.handle('get-backend-status', () => {
+    return { status: backendStatus, error: backendError }
+  })
+}
+
+function sendBackendStatus() {
+  if (win) {
+    win.webContents.send('backend-status-change', { status: backendStatus, error: backendError })
+  }
+}
+
+async function waitForBackendReady(maxWaitMs: number = 30000): Promise<boolean> {
+  const startTime = Date.now()
+  const checkInterval = 500 // Check every 500ms
+
+  while (Date.now() - startTime < maxWaitMs) {
+    try {
+      const response = await fetch('http://localhost:8000/health', {
+        method: 'GET',
+        signal: AbortSignal.timeout(2000)
+      })
+      if (response.ok) {
+        return true
+      }
+    } catch {
+      // Backend not ready yet, continue waiting
+    }
+    await new Promise(resolve => setTimeout(resolve, checkInterval))
+  }
+  return false
 }
 
 function startPythonBackend() {
@@ -160,8 +194,26 @@ function startPythonBackend() {
 
   if (isDev) {
     console.log('Dev mode detected: Skipping auto-spawn of Python backend. Please ensure backend is running manually.')
+    // In dev mode, check if backend is already running
+    backendStatus = 'starting'
+    sendBackendStatus()
+    waitForBackendReady(5000).then(ready => {
+      if (ready) {
+        backendStatus = 'ready'
+        console.log('Dev mode: Backend is already running')
+      } else {
+        backendStatus = 'error'
+        backendError = 'Backend not running. Please start it manually with: cd backend && uvicorn main:app --reload'
+        console.log('Dev mode: Backend not detected, please start manually')
+      }
+      sendBackendStatus()
+    })
     return
   }
+
+  backendStatus = 'starting'
+  backendError = null
+  sendBackendStatus()
 
   // In production, backend is in resources/backend-dist
   // Uses Python Embeddable (portable, no venv path issues)
@@ -177,11 +229,17 @@ function startPythonBackend() {
   if (!fs.existsSync(pythonPath)) {
     console.error('FATAL: Python executable not found:', pythonPath)
     console.error('Available files in backend-dist:', fs.existsSync(backendDir) ? fs.readdirSync(backendDir) : 'DIR NOT FOUND')
+    backendStatus = 'error'
+    backendError = 'Python executable not found'
+    sendBackendStatus()
     return
   }
 
   if (!fs.existsSync(scriptPath)) {
     console.error('FATAL: Backend script not found:', scriptPath)
+    backendStatus = 'error'
+    backendError = 'Backend script not found'
+    sendBackendStatus()
     return
   }
 
@@ -216,7 +274,13 @@ function startPythonBackend() {
     })
 
     pyProcess.stdout?.on('data', (data) => {
-      console.log(`Python: ${data}`)
+      const output = data.toString()
+      console.log(`Python: ${output}`)
+      // Detect when uvicorn is ready
+      if (output.includes('Uvicorn running') || output.includes('Application startup complete')) {
+        backendStatus = 'ready'
+        sendBackendStatus()
+      }
     })
 
     pyProcess.stderr?.on('data', (data) => {
@@ -227,16 +291,37 @@ function startPythonBackend() {
       console.log(`Python process exited with code ${code}`)
       if (code !== 0 && code !== null) {
         console.error('Backend crashed! Exit code:', code)
+        backendStatus = 'error'
+        backendError = `Backend process exited with code ${code}`
+        sendBackendStatus()
       }
     })
 
     pyProcess.on('error', (err) => {
       console.error('Failed to start Python backend:', err)
+      backendStatus = 'error'
+      backendError = `Failed to start backend: ${err.message}`
+      sendBackendStatus()
     })
 
     console.log('Python backend spawn initiated, PID:', pyProcess.pid)
+
+    // Also check via HTTP health endpoint as a backup
+    waitForBackendReady(30000).then(ready => {
+      if (ready && backendStatus === 'starting') {
+        backendStatus = 'ready'
+        sendBackendStatus()
+      } else if (!ready && backendStatus === 'starting') {
+        backendStatus = 'error'
+        backendError = 'Backend failed to respond within 30 seconds'
+        sendBackendStatus()
+      }
+    })
   } catch (err) {
     console.error('Exception spawning Python backend:', err)
+    backendStatus = 'error'
+    backendError = `Exception starting backend: ${err instanceof Error ? err.message : 'Unknown error'}`
+    sendBackendStatus()
   }
 }
 

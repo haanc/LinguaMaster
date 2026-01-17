@@ -144,5 +144,13 @@
     "skip": "稍后再说",
     "install": "安装组件",
     "note": "组件将保存在应用数据目录（约 100MB）"
+  },
+  "backend": {
+    "starting": "正在启动后端服务...",
+    "elapsed": "已用时: {{seconds}}秒",
+    "firstRunHint": "首次启动可能需要较长时间来初始化模型。",
+    "error": "后端启动失败",
+    "retry": "重试",
+    "initializing": "初始化中..."
   }
 }

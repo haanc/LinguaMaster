@@ -144,5 +144,13 @@
     "skip": "Skip for now",
     "install": "Install Components",
     "note": "Components will be stored in app data folder (~100MB)"
+  },
+  "backend": {
+    "starting": "Starting backend service...",
+    "elapsed": "Elapsed: {{seconds}}s",
+    "firstRunHint": "First launch may take longer as models are being initialized.",
+    "error": "Failed to start backend",
+    "retry": "Retry",
+    "initializing": "Initializing..."
   }
 }
