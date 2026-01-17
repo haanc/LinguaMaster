@@ -117,14 +117,20 @@ LinguaMaster/
 
 从 [Releases](https://github.com/haanc/LinguaMaster/releases) 下载最新安装包。
 
-**重要：** 需要安装 FFmpeg 用于音频提取和转录：
+**重要：** 需要安装以下外部依赖：
 
 **Windows（推荐 - 使用 winget）：**
 ```powershell
+# 视频下载和流媒体解析必需
+winget install yt-dlp
+
+# 音频提取和转录必需
 winget install FFmpeg
 ```
 
-**或手动下载：** [FFmpeg 下载](https://ffmpeg.org/download.html) - 添加到系统 PATH。
+**或手动下载：**
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) - 下载 `.exe` 并添加到系统 PATH
+- [FFmpeg](https://ffmpeg.org/download.html) - 下载并添加到系统 PATH
 
 ### 从源码构建
 
@@ -133,6 +139,7 @@ winget install FFmpeg
 - **Node.js** >= 18
 - **Python** >= 3.10
 - **FFmpeg** - 需添加到系统 PATH
+- **yt-dlp** - 需添加到系统 PATH
 
 #### 安装步骤
 

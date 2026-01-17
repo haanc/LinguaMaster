@@ -117,14 +117,20 @@ LinguaMaster/
 
 Download the latest installer from [Releases](https://github.com/haanc/LinguaMaster/releases).
 
-**Important:** You need to install FFmpeg for audio extraction and transcription:
+**Important:** You need to install these external dependencies:
 
 **Windows (recommended - using winget):**
 ```powershell
+# Required for video download and streaming
+winget install yt-dlp
+
+# Required for audio extraction and transcription
 winget install FFmpeg
 ```
 
-**Or download manually:** [FFmpeg Downloads](https://ffmpeg.org/download.html) - add to system PATH.
+**Or install manually:**
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) - Download the `.exe` and add to system PATH
+- [FFmpeg](https://ffmpeg.org/download.html) - Download and add to system PATH
 
 ### Build from Source
 
@@ -133,6 +139,7 @@ winget install FFmpeg
 - **Node.js** >= 18
 - **Python** >= 3.10
 - **FFmpeg** - Must be in system PATH
+- **yt-dlp** - Must be in system PATH
 
 #### Installation
 
