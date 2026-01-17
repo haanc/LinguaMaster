@@ -1,15 +1,53 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.linguamaster.app",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "LinguaMaster",
   "directories": {
     "output": "release/${version}"
   },
   "files": [
     "dist",
-    "dist-electron"
+    "dist-electron",
+    // Exclude sensitive files from packaging
+    "!**/.env",
+    "!**/.env.local",
+    "!**/.env.*.local",
+    "!**/*.db",
+    "!**/*.sqlite",
+    "!**/*.sqlite3",
+    "!**/venv/**",
+    "!**/__pycache__/**",
+    "!**/*.pyc",
+    "!**/node_modules/**",
+    "!**/.git/**",
+    "!**/cache/**",
+    "!**/*.log",
+    "!**/*.pem",
+    "!**/*.key",
+    "!**/credentials.json",
+    "!**/secrets.json",
+    "!**/.secrets/**"
+  ],
+  // Extra resources: packaged backend with Python venv
+  // Run scripts/prepare-backend.ps1 before building to create backend-dist
+  "extraResources": [
+    {
+      "from": "backend-dist",
+      "to": "backend-dist",
+      "filter": [
+        "**/*",
+        "!**/.env",
+        "!**/.env.*",
+        "!**/*.db",
+        "!**/*.sqlite*",
+        "!**/__pycache__/**",
+        "!**/*.pyc",
+        "!**/cache/**",
+        "!**/*.log"
+      ]
+    }
   ],
   "mac": {
     "target": [
@@ -18,6 +56,7 @@
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
+    "icon": "public/icon.ico",
     "target": [
       {
         "target": "nsis",
@@ -32,7 +71,9 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": false,
+    "installerIcon": "public/icon.ico",
+    "uninstallerIcon": "public/icon.ico"
   },
   "linux": {
     "target": [

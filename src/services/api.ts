@@ -4,6 +4,9 @@ import axios from 'axios';
 import type { MediaSource, SubtitleSegment, SavedWord, MediaStatus } from '../types/generated';
 export type { MediaSource, SubtitleSegment, SavedWord, MediaStatus };
 
+// Import LLM config storage for user-configured AI providers
+import { llmConfigStorage } from './llmConfigStorage';
+
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // Add Interceptor to inject Owner ID
@@ -15,6 +18,29 @@ axios.interceptors.request.use((config) => {
     const ownerId = (userRole === 'user' && userId) ? userId : 'guest';
 
     config.headers['X-Owner-Id'] = ownerId;
+    return config;
+});
+
+// Add Interceptor to inject LLM configuration for AI routes
+// SECURITY NOTE: API keys are base64-encoded (NOT encrypted) in the X-LLM-Config header.
+// This is acceptable for localhost connections but should NEVER be used over non-localhost.
+axios.interceptors.request.use((config) => {
+    // Only inject LLM config for AI-related endpoints
+    if (config.url?.includes('/ai/')) {
+        const llmConfigHeader = llmConfigStorage.getRequestHeader();
+        if (llmConfigHeader) {
+            // Security check: warn if not localhost
+            const baseUrl = config.baseURL || API_BASE_URL;
+            const isLocalhost = baseUrl.includes('127.0.0.1') || baseUrl.includes('localhost');
+            if (!isLocalhost && typeof console !== 'undefined') {
+                console.warn(
+                    '[SECURITY WARNING] LLM config header contains API keys and should only be used with localhost backend. ' +
+                    'Current backend URL:', baseUrl
+                );
+            }
+            config.headers['X-LLM-Config'] = llmConfigHeader;
+        }
+    }
     return config;
 });
 
@@ -204,5 +230,16 @@ export const api = {
             target_language: targetLanguage
         });
         return response.data;
+    },
+
+    // Generic HTTP methods for flexible API access
+    post: async (endpoint: string, data: unknown) => {
+        const response = await axios.post(`${API_BASE_URL}${endpoint}`, data);
+        return response;
+    },
+
+    get: async (endpoint: string, params?: Record<string, unknown>) => {
+        const response = await axios.get(`${API_BASE_URL}${endpoint}`, { params });
+        return response;
     }
 };

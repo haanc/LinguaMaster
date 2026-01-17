@@ -1,0 +1,56 @@
+.auth-modal input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Override browser autofill styles */
+.auth-modal input:-webkit-autofill,
+.auth-modal input:-webkit-autofill:hover,
+.auth-modal input:-webkit-autofill:focus,
+.auth-modal input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgba(0, 0, 0, 0.2) inset !important;
+    -webkit-text-fill-color: #fff !important;
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    caret-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Hide password reveal button in Edge/Chrome */
+.auth-modal input::-ms-reveal,
+.auth-modal input::-ms-clear {
+    display: none !important;
+}
+
+/* Hide ALL internal pseudo elements */
+.auth-modal input::-webkit-credentials-auto-fill-button,
+.auth-modal input::-webkit-caps-lock-indicator,
+.auth-modal input::-webkit-contacts-auto-fill-button,
+.auth-modal input::-webkit-credit-card-auto-fill-button,
+.auth-modal input::-internal-autofill-selected,
+.auth-modal input::-webkit-textfield-decoration-container {
+    visibility: hidden !important;
+    display: none !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    right: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Force the input to not have any internal UI elements */
+.auth-modal input[type="password"],
+.auth-modal input[type="email"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+/* Ensure consistent styling */
+.auth-modal .auth-input-group {
+    width: 100%;
+}
+
+.auth-modal .auth-input-group > div {
+    width: 100%;
+}

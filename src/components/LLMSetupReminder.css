@@ -1,0 +1,131 @@
+.llm-reminder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.llm-reminder-modal {
+    background: var(--bg-elevated, #1a1a24);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid var(--border-default, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.llm-reminder-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.llm-reminder-modal h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.4rem;
+    color: var(--text-primary, #f8fafc);
+    font-weight: 600;
+}
+
+.llm-reminder-message {
+    color: var(--text-secondary, #94a3b8);
+    margin: 0 0 20px 0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.llm-reminder-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+    text-align: left;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 10px;
+    padding: 16px 20px;
+}
+
+.llm-reminder-features li {
+    color: var(--text-secondary, #94a3b8);
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.llm-reminder-features li:first-child {
+    margin-top: 0;
+}
+
+.llm-reminder-features li:last-child {
+    margin-bottom: 0;
+}
+
+.llm-reminder-note {
+    color: var(--text-muted, #64748b);
+    font-size: 0.85rem;
+    margin: 0 0 24px 0;
+    font-style: italic;
+}
+
+.llm-reminder-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.llm-reminder-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.llm-reminder-btn.primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    flex: 1;
+}
+
+.llm-reminder-btn.primary:hover {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    transform: translateY(-1px);
+}
+
+.llm-reminder-btn.secondary {
+    background: transparent;
+    color: var(--text-secondary, #94a3b8);
+    border: 1px solid var(--border-default, rgba(255, 255, 255, 0.1));
+}
+
+.llm-reminder-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #f8fafc);
+    transform: none;
+}

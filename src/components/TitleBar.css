@@ -1,0 +1,85 @@
+.titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 32px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    -webkit-app-region: drag; /* Make the entire bar draggable */
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.titlebar-drag {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    height: 100%;
+    gap: 8px;
+}
+
+.titlebar-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.titlebar-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #7b68ee, #9b8bff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+}
+
+.titlebar-controls {
+    display: flex;
+    height: 100%;
+    -webkit-app-region: no-drag; /* Buttons should be clickable */
+}
+
+.titlebar-btn {
+    width: 46px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0;
+    border-radius: 0;
+}
+
+.titlebar-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.titlebar-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.titlebar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    transform: none;
+}
+
+.titlebar-btn.close:hover {
+    background: #e81123;
+    color: white;
+}
+
+.titlebar-btn svg {
+    width: 10px;
+    height: 10px;
+}

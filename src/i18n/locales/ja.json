@@ -1,0 +1,136 @@
+{
+  "app": {
+    "name": "LinguaMaster"
+  },
+  "nav": {
+    "library": "ライブラリ",
+    "notebook": "単語帳",
+    "settings": "設定",
+    "import": "インポート",
+    "local": "ローカル",
+    "login": "ログイン"
+  },
+  "library": {
+    "title": "マイライブラリ",
+    "loading": "読み込み中...",
+    "noVideos": "まだ動画がありません。上にURLを貼り付けてインポートしてください！",
+    "videoDeleted": "動画が削除されました"
+  },
+  "empty": {
+    "title": "言語学習の旅を始めましょう",
+    "description": "YouTubeリンクを貼り付けるか、ローカルの動画ファイルをドラッグ＆ドロップ",
+    "urlPlaceholder": "動画のURLを貼り付け...",
+    "importBtn": "インポート",
+    "importing": "インポート中...",
+    "or": "または",
+    "selectLocal": "ローカルファイルを選択",
+    "supported": "対応: YouTube, Bilibili, MP4, MKV, WebM"
+  },
+  "card": {
+    "ready": "準備完了",
+    "error": "エラー",
+    "cloud": "クラウド",
+    "processing": "処理中",
+    "delete": "動画を削除",
+    "confirm": "確認"
+  },
+  "sidebar": {
+    "transcript": "字幕",
+    "tutor": "AIチューター",
+    "target": "対象言語",
+    "showTranslation": "翻訳を表示",
+    "explainThis": "これを説明",
+    "askQuestion": "質問を入力...",
+    "send": "送信",
+    "thinking": "考え中..."
+  },
+  "notebook": {
+    "title": "単語帳",
+    "filter": "フィルター",
+    "all": "すべて",
+    "startReview": "復習を開始",
+    "noWords": "まだ保存された単語がありません。動画を見ながら単語を選択してここに追加してください。",
+    "word": "単語",
+    "translation": "翻訳",
+    "context": "文脈",
+    "nextReview": "次の復習",
+    "actions": "アクション",
+    "delete": "削除"
+  },
+  "settings": {
+    "title": "設定",
+    "language": "表示言語",
+    "languageDesc": "お好みの表示言語を選択してください",
+    "llm": "LLM設定",
+    "llmDesc": "AIモデルの設定を構成"
+  },
+  "progress": {
+    "downloading": "ダウンロード中",
+    "transcribing": "文字起こし中",
+    "chunking": "音声を分割中",
+    "merging": "結果を統合中..."
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "save": "保存",
+    "close": "閉じる",
+    "loading": "読み込み中..."
+  },
+  "llmReminder": {
+    "title": "こんにちは！AIアシスタントを設定しましょう 🎉",
+    "message": "フル機能を使うには、まずAIサービスの設定が必要です。設定がないと、これらの素敵な機能がお休みしちゃいます~",
+    "feature1": "スマート単語翻訳と定義",
+    "feature2": "文法分析と解説",
+    "feature3": "AIチューターとチャット",
+    "feature4": "字幕の自動翻訳",
+    "note": "心配しないで、数分で完了しますよ！OpenAI、Claude、Geminiなどに対応しています~",
+    "goToSettings": "設定へ",
+    "later": "あとで"
+  },
+  "auth": {
+    "welcomeBack": "おかえりなさい",
+    "createAccount": "アカウント作成",
+    "login": "ログイン",
+    "signUp": "新規登録",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "signIn": "ログイン",
+    "processing": "処理中...",
+    "signUpSuccess": "登録完了！確認メールをご確認ください。"
+  },
+  "subtitleSidebar": {
+    "title": "インタラクティブ字幕"
+  },
+  "status": {
+    "selectVideo": "動画を選択するかURLを貼り付けて開始",
+    "translating": "翻訳中... ({{count}} 件の字幕)",
+    "translationComplete": "翻訳完了",
+    "translationFailed": "翻訳失敗: {{error}}",
+    "translatingTo": "{{lang}}に翻訳中...",
+    "loggedOut": "ログアウトしました",
+    "hlsError": "HLSエラー: {{details}}",
+    "playingLocal": "ローカル再生中: {{path}}",
+    "cloudVideoFound": "クラウド動画を発見。ダウンロード開始...",
+    "downloadStarted": "ダウンロード開始: {{title}}",
+    "downloadFailed": "ダウンロード失敗: {{error}}",
+    "resolvingStream": "ストリームURLを解決中: {{title}}...",
+    "loadingBilibili": "Bilibili動画を読み込み中...",
+    "streaming": "ストリーミング中: {{title}}",
+    "streamResolveFailed": "ストリームURLの解決に失敗",
+    "error": "エラー: {{error}}",
+    "playingLocalAudio": "ローカル音声再生中: {{title}}",
+    "processingError": "エラー: {{error}} 削除して再試行してください。",
+    "videoProcessing": "動画は{{status}}中... お待ちください。",
+    "invalidUrl": "無効なURL: 有効なYouTubeまたはBilibiliリンクを入力してください",
+    "startingImport": "バックグラウンドインポート開始...",
+    "videoQueued": "動画がキューに追加されました！まもなくライブラリに表示されます。",
+    "importFailed": "インポート失敗: {{error}}",
+    "videoDeleted": "動画が削除されました",
+    "deleteFailed": "動画の削除に失敗",
+    "syncing": "同期中...",
+    "syncComplete": "同期完了！",
+    "syncFailed": "同期失敗: {{error}}",
+    "videoError": "動画エラー: {{error}}",
+    "loggedIn": "ログイン成功！"
+  }
+}

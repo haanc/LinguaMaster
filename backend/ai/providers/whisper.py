@@ -174,22 +174,38 @@ class OpenAIWhisperProvider(WhisperProvider):
 
 class LocalWhisperProvider(WhisperProvider):
     """
-    Local Whisper provider using whisper.cpp or faster-whisper.
-    Placeholder for future implementation.
+    Local Whisper provider using faster-whisper.
+    Downloads models on first use and supports GPU acceleration.
+
+    This is a wrapper that imports the full implementation from local_whisper.py
     """
 
     def __init__(self, config: AIConfig):
-        self.config = config
+        from .local_whisper import LocalWhisperProvider as LocalProvider, LocalWhisperConfig
+
+        # Create local config from environment
+        local_config = LocalWhisperConfig.from_env()
+        self._provider = LocalProvider(local_config)
 
     @property
     def name(self) -> str:
-        return "Local Whisper (not implemented)"
+        return self._provider.name
 
     def transcribe(self, audio_path: str) -> List[TranscriptionSegment]:
-        raise NotImplementedError(
-            "Local Whisper is not yet implemented. "
-            "Please configure Azure or OpenAI Whisper in .env"
-        )
+        return self._provider.transcribe(audio_path)
+
+    def is_available(self) -> bool:
+        """Check if local Whisper is available."""
+        return self._provider.is_available()
+
+    def get_model_status(self):
+        """Get current model status."""
+        return self._provider.get_model_status()
+
+    @property
+    def download_manager(self):
+        """Access the download manager for model management."""
+        return self._provider.download_manager
 
 
 # Provider registry

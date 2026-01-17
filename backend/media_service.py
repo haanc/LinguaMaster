@@ -1,5 +1,6 @@
 import yt_dlp
 import os
+from typing import Optional, Callable
 
 class MediaService:
     def __init__(self, download_dir="cache"):
@@ -49,8 +50,29 @@ class MediaService:
                 print(f"ERROR fetching metadata: {str(e)}")
                 raise e
 
-    def download_audio(self, url: str) -> str:
-        """Download AUDIO ONLY using yt-dlp to local cache."""
+    def download_audio(self, url: str, progress_callback: Optional[Callable[[int, str], None]] = None) -> str:
+        """Download AUDIO ONLY using yt-dlp to local cache.
+
+        Args:
+            url: Video URL to download audio from
+            progress_callback: Optional callback(percent: int, message: str) for progress updates
+        """
+        def make_progress_hook(callback):
+            def hook(d):
+                if d['status'] == 'downloading':
+                    # Extract percentage from _percent_str like "50.0%"
+                    percent_str = d.get('_percent_str', '0%').strip().rstrip('%')
+                    try:
+                        percent = int(float(percent_str))
+                    except ValueError:
+                        percent = 0
+                    downloaded = d.get('_downloaded_bytes_str', '?')
+                    total = d.get('_total_bytes_str', d.get('_total_bytes_estimate_str', '?'))
+                    callback(percent, f"下载中: {downloaded}/{total}")
+                elif d['status'] == 'finished':
+                    callback(95, "下载完成，正在转换格式...")
+            return hook
+
         ydl_opts = {
             'outtmpl': f'{self.download_dir}/%(id)s.%(ext)s',
             'format': 'bestaudio/best', # Audio only
@@ -60,10 +82,18 @@ class MediaService:
                 'preferredquality': '192',
             }],
             'force_overwrites': True,
-            'socket_timeout': 30, 
+            'socket_timeout': 30,
             'retries': 10,
             'fragment_retries': 10,
+            # IMPORTANT: Suppress output to prevent Broken pipe errors in background tasks
+            'quiet': True,
+            'no_warnings': True,
+            'noprogress': True,
         }
+
+        # Add progress hook if callback provided
+        if progress_callback:
+            ydl_opts['progress_hooks'] = [make_progress_hook(progress_callback)]
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             # After post-processing, the file is .mp3

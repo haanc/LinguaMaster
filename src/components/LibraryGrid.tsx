@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, MediaSource } from '../services/api';
 import EmptyState from './EmptyState';
 import './LibraryGrid.css';
@@ -19,6 +20,7 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
     onSelectLocal,
     isImporting = false
 }) => {
+    const { t } = useTranslation();
     const [mediaList, setMediaList] = useState<MediaSource[]>([]);
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -51,13 +53,37 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
         return `${min}:${sec.toString().padStart(2, '0')}`;
     };
 
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'ready': return 'READY';
-            case 'error': return 'ERROR';
-            case 'cloud_only': return 'CLOUD ☁️';
-            default: return 'PROCESSING';
+    const getStatusLabel = (media: MediaSource) => {
+        const status = media.status || 'ready';
+        if (status === 'ready') return t('card.ready');
+        if (status === 'error') return t('card.error');
+        if (status === 'cloud_only') return `${t('card.cloud')} ☁️`;
+        // For processing states, parse progress_message and translate
+        if (media.progress_message) {
+            const msg = media.progress_message;
+            // Parse structured messages: "chunking:N", "transcribing:X/Y", "merging", "downloading"
+            if (msg === 'downloading') {
+                return t('progress.downloading');
+            }
+            if (msg === 'merging') {
+                return t('progress.merging');
+            }
+            if (msg.startsWith('chunking:')) {
+                const chunks = msg.split(':')[1];
+                return `${t('progress.chunking')} (${chunks})`;
+            }
+            if (msg.startsWith('transcribing:')) {
+                const progress = msg.split(':')[1];
+                return `${t('progress.transcribing')} (${progress})`;
+            }
+            // Legacy: if it's already translated text from old data, show as-is
+            return msg;
         }
+        return t('card.processing');
+    }
+
+    const isProcessing = (status: string) => {
+        return status !== 'ready' && status !== 'error' && status !== 'cloud_only';
     }
 
     const getStatusClass = (status: string) => {
@@ -70,13 +96,13 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
     }
 
     if (loading && mediaList.length === 0) {
-        return <div className="text-white p-8">Loading Library...</div>;
+        return <div className="text-white p-8">{t('library.loading')}</div>;
     }
 
     return (
         <div className="library-container">
             <div className="library-header">
-                <h2>My Library</h2>
+                <h2>{t('library.title')}</h2>
             </div>
 
             {mediaList.length === 0 ? (
@@ -88,7 +114,7 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
                     />
                 ) : (
                     <div className="empty-placeholder">
-                        No videos yet. Paste a URL above to import one!
+                        {t('library.noVideos')}
                     </div>
                 )
             ) : (
@@ -107,55 +133,66 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
                                         No Cover
                                     </div>
                                 )}
-                                <div className="card-actions">
-                                    {confirmingId === media.id ? (
-                                        <div className="confirm-actions">
-                                            <button
-                                                type="button"
-                                                className="confirm-btn"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDeleteVideo(media.id);
-                                                    setMediaList(prev => prev.filter(m => m.id !== media.id));
-                                                    setConfirmingId(null);
-                                                }}
-                                            >
-                                                Confirm
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="cancel-btn"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setConfirmingId(null);
-                                                }}
-                                            >
-                                                ✕
-                                            </button>
+                                {/* Progress bar overlay for processing states */}
+                                {isProcessing(media.status) && (
+                                    <div className="progress-overlay">
+                                        <div className="progress-bar-container">
+                                            <div
+                                                className="progress-bar-fill"
+                                                style={{ width: `${media.progress || 0}%` }}
+                                            />
                                         </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            className="delete-btn"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setConfirmingId(media.id);
-                                            }}
-                                            title="Delete Video"
-                                        >
-                                            🗑️
-                                        </button>
-                                    )}
-                                    <span className={`status-badge ${getStatusClass(media.status || 'ready')}`}>
-                                        {getStatusLabel(media.status || 'ready')}
-                                    </span>
-                                </div>
+                                        <span className="progress-text">{media.progress || 0}%</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="card-content">
                                 <h3 className="card-title" title={media.title}>{media.title}</h3>
                                 <div className="card-meta">
                                     <span>{formatDuration(media.duration)}</span>
-                                    <span>{new Date(media.created_at).toLocaleDateString()}</span>
+                                    <div className="card-bottom-actions">
+                                        <span className={`status-badge ${getStatusClass(media.status || 'ready')}`}>
+                                            {getStatusLabel(media)}
+                                        </span>
+                                        {confirmingId === media.id ? (
+                                            <div className="confirm-actions">
+                                                <button
+                                                    type="button"
+                                                    className="confirm-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDeleteVideo(media.id);
+                                                        setMediaList(prev => prev.filter(m => m.id !== media.id));
+                                                        setConfirmingId(null);
+                                                    }}
+                                                >
+                                                    {t('card.confirm')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="cancel-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setConfirmingId(null);
+                                                    }}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="delete-btn-small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setConfirmingId(media.id);
+                                                }}
+                                                title={t('card.delete')}
+                                            >
+                                                🗑️
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

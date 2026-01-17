@@ -19,6 +19,8 @@ export interface MediaSource {
   duration: number;
   language: string;
   status: MediaStatus;
+  progress: number;
+  progress_message?: string;
   error_message?: string;
   cover_image?: string;
   created_at: string;

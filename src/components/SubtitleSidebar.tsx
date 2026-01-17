@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { SubtitleSegment, api, ChatMessage } from '../services/api'; // Import api and types
+import { LANGUAGE_NAMES } from '../i18n/languages';
 import './SubtitleSidebar.css';
 
 import WordPopover from './WordPopover';
@@ -21,8 +23,6 @@ interface SubtitleSidebarProps {
     isCompact?: boolean; // Compact mode when video is playing
 }
 
-const LANGUAGES = ["Chinese", "English", "Spanish", "French", "Japanese", "German"];
-
 const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
     segments,
     currentTime,
@@ -36,6 +36,7 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
     sourceLanguage,
     isCompact = false
 }) => {
+    const { t } = useTranslation();
     const parentRef = useRef<HTMLDivElement>(null);
 
     // State
@@ -183,38 +184,38 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
         <div className={`subtitle-sidebar ${isCompact ? 'compact' : ''}`}>
             <div className="sidebar-header">
                 <div className="header-top">
-                    <h3>Interactive Subtitles</h3>
+                    <h3>{t('subtitleSidebar.title')}</h3>
                     <div className="tabs">
                         <button
                             className={`tab-btn ${activeTab === 'subtitles' ? 'active' : ''}`}
                             onClick={() => setActiveTab('subtitles')}
                         >
-                            Transcript
+                            {t('sidebar.transcript')}
                         </button>
                         <button
                             className={`tab-btn ${activeTab === 'tutor' ? 'active' : ''}`}
                             onClick={() => setActiveTab('tutor')}
                         >
-                            AI Tutor
+                            {t('sidebar.tutor')}
                         </button>
                     </div>
                 </div>
 
                 <div className="language-selector">
-                    <label>Target:</label>
+                    <label>{t('sidebar.target')}:</label>
                     <select
                         value={targetLanguage}
                         onChange={(e) => onTargetLanguageChange(e.target.value)}
                         className="lang-select"
                     >
-                        {LANGUAGES.map(lang => (
+                        {LANGUAGE_NAMES.map(lang => (
                             <option key={lang} value={lang}>{lang}</option>
                         ))}
                     </select>
                     <button
                         className={`translation-toggle ${showTranslation ? 'active' : ''} ${isTranslating ? 'loading' : ''}`}
                         onClick={() => onShowTranslationChange(!showTranslation)}
-                        title={isTranslating ? 'Translating...' : (showTranslation ? 'Hide translation' : 'Show translation')}
+                        title={isTranslating ? t('sidebar.thinking') : t('sidebar.showTranslation')}
                         disabled={isTranslating}
                     >
                         {isTranslating ? '⏳' : '🌐'}

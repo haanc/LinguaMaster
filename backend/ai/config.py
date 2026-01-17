@@ -76,6 +76,43 @@ class OllamaConfig:
 
 
 @dataclass
+class LocalWhisperConfig:
+    """Local Whisper (faster-whisper) configuration."""
+    model_name: str = "base"  # tiny, base, small, medium, large-v3
+    device: str = "auto"  # auto, cuda, cpu
+    compute_type: str = "auto"  # auto, float16, int8, float32
+    models_dir: Optional[str] = None
+
+    @classmethod
+    def from_env(cls) -> "LocalWhisperConfig":
+        # Support both LOCAL_WHISPER_MODELS_DIR and WHISPER_MODELS_DIR (from Electron)
+        models_dir = os.getenv("LOCAL_WHISPER_MODELS_DIR") or os.getenv("WHISPER_MODELS_DIR")
+        return cls(
+            model_name=os.getenv("LOCAL_WHISPER_MODEL", "base"),
+            device=os.getenv("LOCAL_WHISPER_DEVICE", "auto"),
+            compute_type=os.getenv("LOCAL_WHISPER_COMPUTE_TYPE", "auto"),
+            models_dir=models_dir,
+        )
+
+    @property
+    def models_path(self) -> Path:
+        """Get the models directory path."""
+        if self.models_dir:
+            return Path(self.models_dir)
+
+        # Default: use app data directory
+        import sys
+        if sys.platform == "win32":
+            base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        elif sys.platform == "darwin":
+            base = Path.home() / "Library" / "Application Support"
+        else:
+            base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+
+        return base / "LinguaMaster" / "whisper-models"
+
+
+@dataclass
 class AIConfig:
     """
     Main AI configuration container.
@@ -84,6 +121,7 @@ class AIConfig:
     azure: AzureConfig = field(default_factory=AzureConfig.from_env)
     openai: OpenAIConfig = field(default_factory=OpenAIConfig.from_env)
     ollama: OllamaConfig = field(default_factory=OllamaConfig.from_env)
+    local_whisper: LocalWhisperConfig = field(default_factory=LocalWhisperConfig.from_env)
 
     # Provider preference (can be overridden via env)
     llm_provider_override: Optional[str] = None
@@ -95,6 +133,7 @@ class AIConfig:
             azure=AzureConfig.from_env(),
             openai=OpenAIConfig.from_env(),
             ollama=OllamaConfig.from_env(),
+            local_whisper=LocalWhisperConfig.from_env(),
             llm_provider_override=os.getenv("LLM_PROVIDER"),
             whisper_provider_override=os.getenv("WHISPER_PROVIDER"),
         )

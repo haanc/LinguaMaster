@@ -10,7 +10,7 @@ interface QuickReviewProps {
 
 type Difficulty = 'forgot' | 'hard' | 'good' | 'easy';
 
-const QuickReview: React.FC<QuickReviewProps> = ({ isOpen, onClose, mediaId }) => {
+const QuickReview: React.FC<QuickReviewProps> = ({ isOpen, onClose, mediaId: _mediaId }) => {
     const [words, setWords] = useState<VocabWord[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showAnswer, setShowAnswer] = useState(false);

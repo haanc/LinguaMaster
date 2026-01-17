@@ -1,0 +1,136 @@
+{
+  "app": {
+    "name": "LinguaMaster"
+  },
+  "nav": {
+    "library": "媒体库",
+    "notebook": "生词本",
+    "settings": "设置",
+    "import": "导入",
+    "local": "本地",
+    "login": "登录"
+  },
+  "library": {
+    "title": "我的媒体库",
+    "loading": "加载中...",
+    "noVideos": "还没有视频，在上方粘贴链接导入一个吧！",
+    "videoDeleted": "视频已删除"
+  },
+  "empty": {
+    "title": "开始你的语言学习之旅",
+    "description": "粘贴 YouTube 链接，或拖拽本地视频文件",
+    "urlPlaceholder": "粘贴视频链接...",
+    "importBtn": "导入",
+    "importing": "导入中...",
+    "or": "或",
+    "selectLocal": "选择本地文件",
+    "supported": "支持: YouTube, Bilibili, MP4, MKV, WebM"
+  },
+  "card": {
+    "ready": "就绪",
+    "error": "错误",
+    "cloud": "云端",
+    "processing": "处理中",
+    "delete": "删除视频",
+    "confirm": "确认"
+  },
+  "sidebar": {
+    "transcript": "字幕",
+    "tutor": "AI 导师",
+    "target": "目标语言",
+    "showTranslation": "显示翻译",
+    "explainThis": "解释这句话",
+    "askQuestion": "输入问题...",
+    "send": "发送",
+    "thinking": "思考中..."
+  },
+  "notebook": {
+    "title": "生词本",
+    "filter": "筛选",
+    "all": "全部",
+    "startReview": "开始复习",
+    "noWords": "还没有保存的单词。观看视频时选择单词添加到这里。",
+    "word": "单词",
+    "translation": "翻译",
+    "context": "上下文",
+    "nextReview": "下次复习",
+    "actions": "操作",
+    "delete": "删除"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "显示语言",
+    "languageDesc": "选择您偏好的显示语言",
+    "llm": "LLM 配置",
+    "llmDesc": "配置 AI 模型设置"
+  },
+  "progress": {
+    "downloading": "下载中",
+    "transcribing": "转录中",
+    "chunking": "分割音频",
+    "merging": "合并结果..."
+  },
+  "common": {
+    "cancel": "取消",
+    "save": "保存",
+    "close": "关闭",
+    "loading": "加载中..."
+  },
+  "llmReminder": {
+    "title": "嗨！让我们开始配置 AI 助手吧 🎉",
+    "message": "为了让您获得完整的学习体验，需要先设置一个 AI 服务。没有它的话，以下超酷的功能会暂时休息哦~",
+    "feature1": "智能单词翻译和释义",
+    "feature2": "句子语法分析和讲解",
+    "feature3": "AI 导师互动问答",
+    "feature4": "字幕自动翻译",
+    "note": "别担心，只需几分钟就能搞定！支持 OpenAI、Claude、Gemini 等多种服务~",
+    "goToSettings": "去设置",
+    "later": "稍后再说"
+  },
+  "auth": {
+    "welcomeBack": "欢迎回来",
+    "createAccount": "创建账户",
+    "login": "登录",
+    "signUp": "注册",
+    "email": "邮箱",
+    "password": "密码",
+    "signIn": "登录",
+    "processing": "处理中...",
+    "signUpSuccess": "注册成功！请查收邮箱确认。"
+  },
+  "subtitleSidebar": {
+    "title": "互动字幕"
+  },
+  "status": {
+    "selectVideo": "选择视频或粘贴链接开始",
+    "translating": "翻译中... ({{count}} 条字幕)",
+    "translationComplete": "翻译完成",
+    "translationFailed": "翻译失败: {{error}}",
+    "translatingTo": "正在翻译为 {{lang}}...",
+    "loggedOut": "已退出登录",
+    "hlsError": "HLS 错误: {{details}}",
+    "playingLocal": "正在播放本地文件: {{path}}",
+    "cloudVideoFound": "发现云端视频，开始下载...",
+    "downloadStarted": "开始下载: {{title}}",
+    "downloadFailed": "下载失败: {{error}}",
+    "resolvingStream": "正在解析视频地址: {{title}}...",
+    "loadingBilibili": "正在加载 Bilibili 视频...",
+    "streaming": "正在播放: {{title}}",
+    "streamResolveFailed": "解析视频地址失败",
+    "error": "错误: {{error}}",
+    "playingLocalAudio": "正在播放本地音频: {{title}}",
+    "processingError": "错误: {{error}} 请删除后重试。",
+    "videoProcessing": "视频 {{status}} 中... 请稍候。",
+    "invalidUrl": "无效链接: 请输入有效的 YouTube 或 Bilibili 视频链接",
+    "startingImport": "开始后台导入...",
+    "videoQueued": "视频已加入队列！稍后将出现在媒体库中。",
+    "importFailed": "导入失败: {{error}}",
+    "videoDeleted": "视频已删除",
+    "deleteFailed": "删除视频失败",
+    "syncing": "同步中...",
+    "syncComplete": "同步完成！",
+    "syncFailed": "同步失败: {{error}}",
+    "videoError": "视频错误: {{error}}",
+    "loggedIn": "登录成功！"
+  }
+}

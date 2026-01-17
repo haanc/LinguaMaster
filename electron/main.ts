@@ -18,6 +18,10 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
+// Disable Chromium's autofill and password manager features
+app.commandLine.appendSwitch('disable-features', 'AutofillServerCommunication,PasswordManagerOnboarding')
+app.commandLine.appendSwitch('disable-component-update')
+
 let win: BrowserWindow | null
 let pyProcess: ChildProcess | null = null
 
@@ -84,6 +88,21 @@ function handleIpc() {
     if (canceled) return null
     return filePaths[0]
   })
+
+  // Window control handlers for custom titlebar
+  ipcMain.handle('window-minimize', () => {
+    win?.minimize()
+  })
+  ipcMain.handle('window-maximize', () => {
+    if (win?.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win?.maximize()
+    }
+  })
+  ipcMain.handle('window-close', () => {
+    win?.close()
+  })
 }
 
 function startPythonBackend() {
@@ -97,12 +116,39 @@ function startPythonBackend() {
     return
   }
 
-  const pythonPath = path.join(process.resourcesPath, 'backend', 'venv', 'Scripts', 'python.exe')
-  const scriptPath = path.join(process.env.APP_ROOT, 'backend', 'main.py')
+  // In production, backend is in resources/backend-dist
+  const backendDir = path.join(process.resourcesPath, 'backend-dist')
+  const pythonPath = path.join(backendDir, 'venv', 'Scripts', 'python.exe')
+  const scriptPath = path.join(backendDir, 'main.py')
 
-  console.log('Starting Python backend:', pythonPath, scriptPath)
+  // Set environment variables for the backend
+  const backendEnv = {
+    ...process.env,
+    // Use app's userData directory for database and models
+    LINGUAMASTER_DATA_DIR: app.getPath('userData'),
+    WHISPER_MODELS_DIR: path.join(app.getPath('userData'), 'whisper-models'),
+    DATABASE_PATH: path.join(app.getPath('userData'), 'learning.db'),
+  }
 
-  pyProcess = spawn(pythonPath, [scriptPath])
+  console.log('Starting Python backend...')
+  console.log('  Python:', pythonPath)
+  console.log('  Script:', scriptPath)
+  console.log('  Data Dir:', backendEnv.LINGUAMASTER_DATA_DIR)
+
+  if (!fs.existsSync(pythonPath)) {
+    console.error('Python executable not found:', pythonPath)
+    return
+  }
+
+  if (!fs.existsSync(scriptPath)) {
+    console.error('Backend script not found:', scriptPath)
+    return
+  }
+
+  pyProcess = spawn(pythonPath, [scriptPath], {
+    env: backendEnv,
+    cwd: backendDir,
+  })
 
   pyProcess.stdout?.on('data', (data) => {
     console.log(`Python: ${data}`)
@@ -115,23 +161,35 @@ function startPythonBackend() {
   pyProcess.on('close', (code) => {
     console.log(`Python process exited with code ${code}`)
   })
+
+  pyProcess.on('error', (err) => {
+    console.error('Failed to start Python backend:', err)
+  })
 }
 
 function createWindow() {
   win = new BrowserWindow({
     width: 1200,
     height: 800,
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    title: 'LinguaMaster',
+    icon: path.join(process.env.VITE_PUBLIC, 'icon.ico'),
+    autoHideMenuBar: true, // Hide the menu bar
+    frame: false, // Remove native window frame for custom titlebar
+    titleBarStyle: 'hidden', // Fallback for macOS
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       webSecurity: false, // Allow cross-origin requests in dev mode
+      spellcheck: false, // Disable spellcheck
     },
   })
 
-  // Open DevTools in dev mode for debugging
-  if (!app.isPackaged) {
-    win.webContents.openDevTools()
-  }
+  // Disable Chromium's autofill features
+  win.webContents.session.setSpellCheckerEnabled(false)
+
+  // Open DevTools manually with F12 or Ctrl+Shift+I
+  // if (!app.isPackaged) {
+  //   win.webContents.openDevTools()
+  // }
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {

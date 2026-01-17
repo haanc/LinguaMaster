@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './EmptyState.css';
 
 interface EmptyStateProps {
@@ -12,6 +13,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     onSelectLocal,
     isImporting = false
 }) => {
+    const { t } = useTranslation();
     const [urlInput, setUrlInput] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -26,16 +28,16 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         <div className="empty-state">
             <div className="empty-state-content">
                 <div className="empty-icon">🎬</div>
-                <h2>开始你的语言学习之旅</h2>
+                <h2>{t('empty.title')}</h2>
                 <p className="empty-description">
-                    粘贴 YouTube 链接，或拖拽本地视频文件
+                    {t('empty.description')}
                 </p>
 
                 <form className="import-form" onSubmit={handleSubmit}>
                     <div className="input-group">
                         <input
                             type="text"
-                            placeholder="粘贴视频链接..."
+                            placeholder={t('empty.urlPlaceholder')}
                             value={urlInput}
                             onChange={(e) => setUrlInput(e.target.value)}
                             disabled={isImporting}
@@ -46,13 +48,13 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                             disabled={isImporting || !urlInput.trim()}
                             className="import-btn"
                         >
-                            {isImporting ? '导入中...' : '导入'}
+                            {isImporting ? t('empty.importing') : t('empty.importBtn')}
                         </button>
                     </div>
                 </form>
 
                 <div className="divider">
-                    <span>或</span>
+                    <span>{t('empty.or')}</span>
                 </div>
 
                 <button
@@ -60,11 +62,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                     onClick={onSelectLocal}
                     disabled={isImporting}
                 >
-                    📁 选择本地文件
+                    📁 {t('empty.selectLocal')}
                 </button>
 
                 <p className="supported-formats">
-                    支持: YouTube, Bilibili, MP4, MKV, WebM
+                    {t('empty.supported')}
                 </p>
             </div>
 

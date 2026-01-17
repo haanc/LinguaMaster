@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Mail, Lock, LogIn, UserPlus } from 'lucide-react';
 import { signIn, signUp } from '../../services/supabase';
+import './AuthModal.css';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -10,6 +12,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
+    const { t } = useTranslation();
     const [mode, setMode] = useState<'login' | 'signup'>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -32,7 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             } else {
                 const { error } = await signUp(email, password);
                 if (error) throw error;
-                alert('Sign up successful! Please check your email for confirmation.');
+                alert(t('auth.signUpSuccess'));
                 setMode('login'); // Switch to login after signup
             }
         } catch (err: any) {
@@ -65,7 +68,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                     background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
                 }}>
-                    {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                    {mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}
                 </h2>
 
                 <div className="auth-tabs" style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '12px' }}>
@@ -78,7 +81,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                             transition: 'all 0.2s', outline: 'none'
                         }}
                     >
-                        Login
+                        {t('auth.login')}
                     </button>
                     <button
                         onClick={() => setMode('signup')}
@@ -89,7 +92,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                             transition: 'all 0.2s', outline: 'none'
                         }}
                     >
-                        Sign Up
+                        {t('auth.signUp')}
                     </button>
                 </div>
 
@@ -102,50 +105,56 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div className="input-group">
-                        <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Email</label>
-                        <div style={{ position: 'relative' }}>
-                            <Mail size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: '#94a3b8' }} />
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div className="auth-input-group">
+                        <label style={{
+                            display: 'block', color: '#cbd5e1', fontSize: '0.85rem',
+                            marginBottom: '8px', fontWeight: 500
+                        }}>{t('auth.email')}</label>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '12px',
+                            background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px', padding: '0 14px'
+                        }}>
+                            <Mail size={18} style={{ color: '#94a3b8', flexShrink: 0 }} />
                             <input
                                 type="email"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 required
+                                autoComplete="off"
                                 style={{
-                                    width: '100%', padding: '14px 14px 14px 44px',
-                                    background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    borderRadius: '10px', color: '#fff', outline: 'none',
-                                    transition: 'border-color 0.2s, background 0.2s',
-                                    fontSize: '0.95rem',
-                                    boxSizing: 'border-box' // Fix overflow
+                                    flex: 1, padding: '14px 0',
+                                    background: 'transparent', border: 'none', color: '#fff', outline: 'none',
+                                    fontSize: '0.95rem'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#6366f1'}
-                                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
                                 placeholder="name@example.com"
                             />
                         </div>
                     </div>
 
-                    <div className="input-group">
-                        <label style={{ display: 'block', color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '8px', fontWeight: 500 }}>Password</label>
-                        <div style={{ position: 'relative' }}>
-                            <Lock size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: '#94a3b8' }} />
+                    <div className="auth-input-group">
+                        <label style={{
+                            display: 'block', color: '#cbd5e1', fontSize: '0.85rem',
+                            marginBottom: '8px', fontWeight: 500
+                        }}>{t('auth.password')}</label>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '12px',
+                            background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '10px', padding: '0 14px'
+                        }}>
+                            <Lock size={18} style={{ color: '#94a3b8', flexShrink: 0 }} />
                             <input
                                 type="password"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                                 required
+                                autoComplete="new-password"
                                 style={{
-                                    width: '100%', padding: '14px 14px 14px 44px',
-                                    background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    borderRadius: '10px', color: '#fff', outline: 'none',
-                                    transition: 'border-color 0.2s, background 0.2s',
-                                    fontSize: '0.95rem',
-                                    boxSizing: 'border-box' // Fix overflow
+                                    flex: 1, padding: '14px 0',
+                                    background: 'transparent', border: 'none', color: '#fff', outline: 'none',
+                                    fontSize: '0.95rem'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#6366f1'}
-                                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
                                 placeholder="••••••••"
                             />
                         </div>
@@ -163,10 +172,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                             boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.3)'
                         }}
                     >
-                        {loading ? 'Processing...' : (
+                        {loading ? t('auth.processing') : (
                             <>
                                 {mode === 'login' ? <LogIn size={18} /> : <UserPlus size={18} />}
-                                {mode === 'login' ? 'Sign In' : 'Create Account'}
+                                {mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
                             </>
                         )}
                     </button>

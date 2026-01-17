@@ -11,8 +11,12 @@ class MediaSource(SQLModel, table=True):
     file_path: Optional[str] = None
     duration: float = 0.0
     language: str = "en"
-    # Status tracking for AI processing: pending, downloading, processing_audio, transcribing, ready, error
-    status: str = Field(default="ready") 
+    # Status tracking for AI processing: pending, downloading, transcribing, translating, ready, error
+    status: str = Field(default="ready")
+    # Progress percentage (0-100) for current operation
+    progress: int = Field(default=0)
+    # Detailed progress message for display
+    progress_message: Optional[str] = None
     error_message: Optional[str] = None
     cover_image: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
