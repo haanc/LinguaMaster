@@ -25,8 +25,9 @@ axios.interceptors.request.use((config) => {
 // SECURITY NOTE: API keys are base64-encoded (NOT encrypted) in the X-LLM-Config header.
 // This is acceptable for localhost connections but should NEVER be used over non-localhost.
 axios.interceptors.request.use((config) => {
-    // Only inject LLM config for AI-related endpoints
-    if (config.url?.includes('/ai/')) {
+    // Inject LLM config for AI-related endpoints and translate endpoint
+    const needsLlmConfig = config.url?.includes('/ai/') || config.url?.includes('/translate');
+    if (needsLlmConfig) {
         const llmConfigHeader = llmConfigStorage.getRequestHeader();
         if (llmConfigHeader) {
             // Security check: warn if not localhost

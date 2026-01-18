@@ -300,6 +300,7 @@ class AIService:
         self,
         texts: List[str],
         target_language: str = "Chinese",
+        llm_provider: Optional["LLMProvider"] = None,
     ) -> Dict[int, str]:
         """
         Translate multiple texts in a single batch API call.
@@ -307,6 +308,7 @@ class AIService:
         Args:
             texts: List of texts to translate
             target_language: Target language for translation
+            llm_provider: Optional LLM provider (uses global config if not provided)
 
         Returns:
             Dict mapping index -> translation
@@ -314,7 +316,10 @@ class AIService:
         if not texts:
             return {}
 
-        from ai.providers import get_llm_provider
+        # Use provided provider or fall back to global config
+        if llm_provider is None:
+            from ai.providers import get_llm_provider
+            llm_provider = get_llm_provider()
 
         # Prepare batch text with numbered format
         batch_text = "\n---\n".join([f"[{i}] {t}" for i, t in enumerate(texts)])
@@ -325,7 +330,7 @@ class AIService:
         )
 
         try:
-            llm = get_llm_provider().get_chat_model(temperature=0.3)
+            llm = llm_provider.get_chat_model(temperature=0.3)
             response = llm.invoke([
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": batch_text},

@@ -17,6 +17,8 @@ from media_service import media_service
 from ai_service import ai_service
 from translation_cache import get_translation_cache
 from chunked_transcription import TranscriptionProgress
+from ai.dependencies import get_request_llm_provider
+from ai.providers.llm import LLMProvider
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -420,9 +422,12 @@ def translate_segments(
     media_id: UUID,
     req: TranslateSegmentsRequest,
     session: Session = Depends(get_session),
+    llm_provider: LLMProvider = Depends(get_request_llm_provider),
 ):
     """
     Translate specified segments with multi-layer caching.
+
+    Accepts X-LLM-Config header for user-configured LLM.
 
     Note: Each segment stores only one translation at a time.
     If the target language changes, existing translations will be overwritten.
@@ -464,10 +469,10 @@ def translate_segments(
     texts_to_translate = [seg.text for seg in segments_needing_translation]
     segment_map = {i: seg for i, seg in enumerate(segments_needing_translation)}
 
-    print(f"Translating {len(texts_to_translate)} segments to {req.target_language}")
+    print(f"Translating {len(texts_to_translate)} segments to {req.target_language} using {llm_provider.name}")
 
     try:
-        translations = ai_service.translate_batch(texts_to_translate, req.target_language)
+        translations = ai_service.translate_batch(texts_to_translate, req.target_language, llm_provider)
 
         for batch_idx, translation in translations.items():
             seg = segment_map.get(batch_idx)
