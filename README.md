@@ -113,24 +113,17 @@ LinguaMaster/
 
 ## Quick Start
 
-### Download Release
+### Download & Install
 
-Download the latest installer from [Releases](https://github.com/haanc/LinguaMaster/releases).
+1. Download the latest installer from [Releases](https://github.com/haanc/LinguaMaster/releases)
+2. Run `LinguaMaster Setup x.x.x.exe`
+3. Launch the app and start learning!
 
-**Important:** You need to install these external dependencies:
+**That's it!** The app automatically downloads required dependencies (yt-dlp, FFmpeg) on first launch.
 
-**Windows (recommended - using winget):**
-```powershell
-# Required for video download and streaming
-winget install yt-dlp
+> **Note:** First startup may take 1-2 minutes while dependencies are downloaded. Subsequent launches are instant.
 
-# Required for audio extraction and transcription
-winget install FFmpeg
-```
-
-**Or install manually:**
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) - Download the `.exe` and add to system PATH
-- [FFmpeg](https://ffmpeg.org/download.html) - Download and add to system PATH
+---
 
 ### Build from Source
 

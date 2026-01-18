@@ -113,24 +113,17 @@ LinguaMaster/
 
 ## 快速开始
 
-### 下载安装包
+### 下载安装
 
-从 [Releases](https://github.com/haanc/LinguaMaster/releases) 下载最新安装包。
+1. 从 [Releases](https://github.com/haanc/LinguaMaster/releases) 下载最新安装包
+2. 运行 `LinguaMaster Setup x.x.x.exe`
+3. 启动应用，开始学习！
 
-**重要：** 需要安装以下外部依赖：
+**就这么简单！** 应用会在首次启动时自动下载所需依赖（yt-dlp、FFmpeg）。
 
-**Windows（推荐 - 使用 winget）：**
-```powershell
-# 视频下载和流媒体解析必需
-winget install yt-dlp
+> **注意：** 首次启动可能需要 1-2 分钟下载依赖，之后的启动会很快。
 
-# 音频提取和转录必需
-winget install FFmpeg
-```
-
-**或手动下载：**
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp/releases) - 下载 `.exe` 并添加到系统 PATH
-- [FFmpeg](https://ffmpeg.org/download.html) - 下载并添加到系统 PATH
+---
 
 ### 从源码构建
 
