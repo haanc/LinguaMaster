@@ -1,6 +1,0 @@
-{
-  "artifactType":  "ARTIFACT_TYPE_OTHER",
-  "summary":  "Updated Authentication Strategy focusing on 'Email + WeChat'. Replaces generic comparison with specific implementation details for Supabase Auth (Email) and Supabase Edge Functions (WeChat Scan). Details the tech flow for WeChat QR code generation and callback handling.",
-  "updatedAt":  "2025-12-31T05:49:53.816899800Z",
-  "version":  "1"
-}

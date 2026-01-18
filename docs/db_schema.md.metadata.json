@@ -1,5 +1,0 @@
-{
-  "artifactType":  "ARTIFACT_TYPE_OTHER",
-  "summary":  "Core Database Schema Design for Language Learning Assistant. Defines 5 core entities: MediaSource, SubtitleSegment, VocabularyItem, ReviewLog, and UserSettings using SQLModel (SQLAlchemy) style definitions. Includes Mermaid ER diagram to visualize relationships. Key feature: UUID primary keys for future sync compatibility.",
-  "updatedAt":  "2025-12-31T04:36:40.273084800Z"
-}

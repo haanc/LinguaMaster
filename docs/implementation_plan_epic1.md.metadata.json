@@ -1,5 +1,0 @@
-{
-  "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
-  "summary":  "Retrospective Implementation Plan for Epic 1: Scaffold & Tech Spike. Documents the initialization of the Electron + Vite + React stack, integration of the Python FastAPI backend, and implementation of the custom 'local-video://' protocol for media playback.",
-  "updatedAt":  "2025-12-31T06:59:44.716529800Z"
-}

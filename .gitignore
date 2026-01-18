@@ -92,3 +92,6 @@ secrets.json
 *~
 backend-dist/
 release/
+
+# Documentation - personal use only
+docs/
