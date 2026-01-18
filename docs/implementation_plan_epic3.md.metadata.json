@@ -1,5 +1,0 @@
-{
-  "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
-  "summary":  "Implementation plan for Epic 3: The Immersive Player. This plan covers building the interactive subtitle sidebar, implementing bidirectional sync between video playback and subtitles, and the popover UI for dictionary lookups. Verification includes testing high-load subtitle rendering and sync precision.",
-  "updatedAt":  "2025-12-31T06:57:37.221076100Z"
-}

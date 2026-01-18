@@ -1,5 +1,0 @@
-{
-  "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
-  "summary":  "Retrospective Implementation Plan for Epic 2: Data Core. Documents the creation of the SQLModel database schema, implementing FastAPI CRUD endpoints for media and subtitles, and establishing the frontend data fetching layer using React Query and Axios.",
-  "updatedAt":  "2025-12-31T06:59:46.546548700Z"
-}

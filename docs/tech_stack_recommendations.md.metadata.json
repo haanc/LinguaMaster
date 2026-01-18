@@ -1,5 +1,0 @@
-{
-  "artifactType":  "ARTIFACT_TYPE_OTHER",
-  "summary":  "Technical Stack Recommendations for Language Learning Assistant (Desktop). Compares three architectural approaches: 'Modern Web Hybrid' (Electron), 'Professional Native' (PySide6), and 'Iterative MVP' (CustomTkinter), detailing Frontend, Backend, and Database choices for each.",
-  "updatedAt":  "2025-12-31T04:20:37.398364600Z"
-}
