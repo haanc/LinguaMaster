@@ -77,4 +77,8 @@ def health():
 # --- Entry Point ---
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    # In packaged environment, reload=True causes issues with Python Embeddable
+    # Only enable reload in development
+    import sys
+    is_packaged = getattr(sys, 'frozen', False) or 'python-embed' in sys.executable.lower() or not sys.executable.endswith('python.exe')
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=not is_packaged)

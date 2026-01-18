@@ -94,7 +94,7 @@ function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLLMSettingsOpen, setIsLLMSettingsOpen] = useState(false);
   const [showLLMReminder, setShowLLMReminder] = useState(false);
-  const [depsReady, setDepsReady] = useState(false);
+  const [_depsReady, setDepsReady] = useState(false);
   const [backendReady, setBackendReady] = useState(false);
 
   const { refetch } = useMediaList()

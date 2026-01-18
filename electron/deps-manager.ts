@@ -92,13 +92,15 @@ async function downloadFile(
     const file = createWriteStream(destPath)
 
     const request = https.get(url, { timeout: 60000 }, (response) => {
-      // Handle redirects
-      if (response.statusCode === 301 || response.statusCode === 302) {
+      // Handle redirects (301, 302, 303, 307, 308)
+      if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400) {
         const redirectUrl = response.headers.location
         if (redirectUrl) {
           file.close()
           if (fs.existsSync(destPath)) fs.unlinkSync(destPath)
-          downloadFile(redirectUrl, destPath, onProgress).then(resolve).catch(reject)
+          // Handle relative URLs
+          const finalUrl = redirectUrl.startsWith('http') ? redirectUrl : new URL(redirectUrl, url).href
+          downloadFile(finalUrl, destPath, onProgress).then(resolve).catch(reject)
           return
         }
       }

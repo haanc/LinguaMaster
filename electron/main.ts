@@ -268,14 +268,18 @@ function startPythonBackend() {
   console.log('  Data Dir:', backendEnv.LINGUAMASTER_DATA_DIR)
 
   try {
-    pyProcess = spawn(pythonPath, [scriptPath], {
+    // Use shell: true on Windows to properly handle paths with spaces
+    // The paths are wrapped in quotes to prevent shell interpretation issues
+    pyProcess = spawn(`"${pythonPath}"`, [`"${scriptPath}"`], {
       env: backendEnv,
       cwd: backendDir,
+      shell: true,
+      windowsHide: true,
     })
 
     pyProcess.stdout?.on('data', (data) => {
       const output = data.toString()
-      console.log(`Python: ${output}`)
+      console.log(`Python stdout: ${output}`)
       // Detect when uvicorn is ready
       if (output.includes('Uvicorn running') || output.includes('Application startup complete')) {
         backendStatus = 'ready'
@@ -284,7 +288,13 @@ function startPythonBackend() {
     })
 
     pyProcess.stderr?.on('data', (data) => {
-      console.error(`Python Error: ${data}`)
+      const output = data.toString()
+      console.error(`Python stderr: ${output}`)
+      // uvicorn logs to stderr, so also check for ready signal here
+      if (output.includes('Uvicorn running') || output.includes('Application startup complete')) {
+        backendStatus = 'ready'
+        sendBackendStatus()
+      }
     })
 
     pyProcess.on('close', (code) => {
