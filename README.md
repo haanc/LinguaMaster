@@ -121,7 +121,7 @@ LinguaMaster/
 
 **That's it!** The app automatically downloads required dependencies (yt-dlp, FFmpeg) on first launch.
 
-> **Note:** First startup may take 1-2 minutes while dependencies are downloaded. Subsequent launches are instant.
+> **Note:** First startup may take 1-2 minutes while dependencies are downloaded and the backend initializes. The app allows up to 60 seconds for backend startup. Subsequent launches are much faster.
 
 ---
 
@@ -196,11 +196,14 @@ LOCAL_WHISPER_DEVICE=auto
 # Terminal 1: Start backend
 cd backend
 .\venv\Scripts\activate  # Windows
-uvicorn main:app --reload --port 8000
+python main.py
+# Or: uvicorn main:app --port 8000 (without --reload)
 
 # Terminal 2: Start frontend
 npm run dev
 ```
+
+> **Important:** Do NOT use `uvicorn main:app --reload` as it conflicts with BackgroundTasks used for video downloading. Always run without reload mode.
 
 **Build installer:**
 
@@ -265,6 +268,19 @@ npm run gen:types
 | `npm run build:prepare` | Package backend with Python Embeddable |
 | `npm run build:full` | Full build (backend + frontend) |
 | `npm run gen:types` | Generate TypeScript types |
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| **"Backend failed to respond within 60 seconds"** | This can happen on first launch. Wait a moment and restart the app. If persistent, check if port 8000 is in use by another application. |
+| **Video import fails with 500 error** | Ensure you're running the backend without `--reload` flag in development mode. |
+| **FFmpeg/yt-dlp not found** | The app auto-downloads these on first launch. If it fails, manually install them and add to system PATH. |
+| **API key errors** | Double-check your `.env` configuration. API keys are case-sensitive. |
 
 ---
 
