@@ -301,14 +301,16 @@ class AIService:
         texts: List[str],
         target_language: str = "Chinese",
         llm_provider: Optional["LLMProvider"] = None,
+        batch_size: int = 20,
     ) -> Dict[int, str]:
         """
-        Translate multiple texts in a single batch API call.
+        Translate multiple texts in batched API calls to avoid token limits.
 
         Args:
             texts: List of texts to translate
             target_language: Target language for translation
             llm_provider: Optional LLM provider (uses global config if not provided)
+            batch_size: Number of segments per API call (default 20)
 
         Returns:
             Dict mapping index -> translation
@@ -321,42 +323,55 @@ class AIService:
             from ai.providers import get_llm_provider
             llm_provider = get_llm_provider()
 
-        # Prepare batch text with numbered format
-        batch_text = "\n---\n".join([f"[{i}] {t}" for i, t in enumerate(texts)])
+        all_translations: Dict[int, str] = {}
+        total_batches = (len(texts) + batch_size - 1) // batch_size
 
-        system_prompt = (
-            f"You are a translator. Translate each numbered subtitle segment to {target_language}. "
-            "Keep the [number] prefix in your response. Only output translations, no explanations."
-        )
+        print(f"Translating {len(texts)} segments in {total_batches} batches (batch_size={batch_size})")
 
-        try:
-            llm = llm_provider.get_chat_model(temperature=0.3)
-            response = llm.invoke([
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": batch_text},
-            ])
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, len(texts))
+            batch_texts = texts[start_idx:end_idx]
 
-            # Parse response
-            result_text = response.content
-            translations: Dict[int, str] = {}
+            # Prepare batch text with global indices
+            batch_text = "\n---\n".join([f"[{start_idx + i}] {t}" for i, t in enumerate(batch_texts)])
 
-            for line in result_text.split("\n"):
-                line = line.strip()
-                if line.startswith("["):
-                    try:
-                        idx_end = line.index("]")
-                        idx = int(line[1:idx_end])
-                        translation = line[idx_end + 1 :].strip()
-                        if translation:
-                            translations[idx] = translation
-                    except (ValueError, IndexError):
-                        continue
+            system_prompt = (
+                f"You are a translator. Translate each numbered subtitle segment to {target_language}. "
+                "Keep the [number] prefix in your response. Only output translations, no explanations."
+            )
 
-            return translations
+            try:
+                llm = llm_provider.get_chat_model(temperature=0.3)
+                response = llm.invoke([
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": batch_text},
+                ])
 
-        except Exception as e:
-            print(f"Error in translate_batch: {e}")
-            return {}
+                # Parse response
+                result_text = response.content
+
+                for line in result_text.split("\n"):
+                    line = line.strip()
+                    if line.startswith("["):
+                        try:
+                            idx_end = line.index("]")
+                            idx = int(line[1:idx_end])
+                            translation = line[idx_end + 1 :].strip()
+                            if translation:
+                                all_translations[idx] = translation
+                        except (ValueError, IndexError):
+                            continue
+
+                print(f"  Batch {batch_num + 1}/{total_batches}: translated {len(batch_texts)} segments")
+
+            except Exception as e:
+                print(f"Error in translate_batch (batch {batch_num + 1}): {e}")
+                # Continue with next batch instead of failing completely
+                continue
+
+        print(f"Translation complete: {len(all_translations)}/{len(texts)} segments translated")
+        return all_translations
 
 
 # Global singleton instance
