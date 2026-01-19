@@ -1,5 +1,6 @@
 import yt_dlp
 import os
+import subprocess
 from typing import Optional, Callable
 
 class MediaService:
@@ -128,7 +129,7 @@ class MediaService:
         # Actually 'best' is fine if we proxy it.
         
         cmd = [
-            "yt_dlp",
+            "yt-dlp",
             "-g", # Get URL
             "-f", "best[ext=mp4]/best", # Prefer mp4 for browser compatibility
             url
