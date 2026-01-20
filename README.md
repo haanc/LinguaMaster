@@ -18,12 +18,23 @@
 
 ---
 
-## What's New in v0.0.7
+## What's New in v0.0.8
+
+- **New:** Settings page now displays app version number
+- **Fixed:** Translation parsing issue - improved regex-based parsing for batch translations
+- **Fixed:** Chat endpoint documentation - removed outdated comments
+- **Optimized:** Removed 61 lines of dead code (audio_service.py)
+- **Optimized:** VAD parameters tuned (400ms → 700ms) for better transcription segmentation
+- **Improved:** Smart merging of short subtitle segments
+
+<details>
+<summary>Previous: v0.0.7</summary>
 
 - **Fixed:** Video playback 500 error after app restart (orphaned Python processes causing port conflicts)
 - **Fixed:** AI Tutor not responding (LangGraph 1.0.6 missing cache module)
 - **Improved:** Backend process cleanup on Windows - proper termination of child processes
 - **Improved:** Startup orphan process detection and cleanup
+</details>
 
 ---
 
