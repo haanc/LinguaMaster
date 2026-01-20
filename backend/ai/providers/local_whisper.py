@@ -275,12 +275,17 @@ class LocalWhisperProvider(WhisperProvider):
 
         logger.info(f"Transcribing: {audio_path}")
 
-        # Transcribe with word-level timestamps
+        # Transcribe with word-level timestamps and optimized VAD parameters
+        # Increase min_silence_duration to avoid splitting mid-sentence
         segments_gen, info = self._model.transcribe(
             audio_path,
             beam_size=5,
             word_timestamps=True,
             vad_filter=True,  # Filter out silence
+            vad_parameters={
+                "min_silence_duration_ms": 700,  # Require 700ms silence to split (default: 400ms)
+                "speech_pad_ms": 200,  # Pad speech with 200ms (default: 30ms)
+            },
         )
 
         logger.info(f"Detected language: {info.language} (probability: {info.language_probability:.2f})")
@@ -348,6 +353,10 @@ class LocalWhisperProvider(WhisperProvider):
             beam_size=5,
             word_timestamps=True,
             vad_filter=True,
+            vad_parameters={
+                "min_silence_duration_ms": 700,
+                "speech_pad_ms": 200,
+            },
         )
 
         segments = []

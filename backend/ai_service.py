@@ -360,7 +360,8 @@ class AIService:
             end_idx = min(start_idx + batch_size, len(texts))
             batch_texts = texts[start_idx:end_idx]
 
-            # Prepare batch text with global indices
+            # Prepare batch text with LOCAL indices (matching caller's segment_map)
+            # Each batch still uses indices relative to the full texts list
             batch_text = "\n---\n".join([f"[{start_idx + i}] {t}" for i, t in enumerate(batch_texts)])
 
             system_prompt = (
@@ -378,19 +379,44 @@ class AIService:
                 # Parse response
                 result_text = response.content
 
-                for line in result_text.split("\n"):
-                    line = line.strip()
-                    if line.startswith("["):
+                # Split by --- separator first (same as input format)
+                # This handles multi-line translations better
+                segments = result_text.split("---")
+                parsed_count = 0
+
+                for segment in segments:
+                    segment = segment.strip()
+                    if not segment:
+                        continue
+
+                    # Try to find [number] at the start
+                    if segment.startswith("["):
                         try:
-                            idx_end = line.index("]")
-                            idx = int(line[1:idx_end])
-                            translation = line[idx_end + 1 :].strip()
+                            idx_end = segment.index("]")
+                            idx = int(segment[1:idx_end])
+                            translation = segment[idx_end + 1:].strip()
                             if translation:
                                 all_translations[idx] = translation
-                        except (ValueError, IndexError):
+                                parsed_count += 1
+                        except (ValueError, IndexError) as e:
+                            print(f"  Warning: Failed to parse segment: {segment[:50]}... Error: {e}")
                             continue
+                    else:
+                        # Fallback: try line-by-line parsing for backwards compatibility
+                        for line in segment.split("\n"):
+                            line = line.strip()
+                            if line.startswith("["):
+                                try:
+                                    idx_end = line.index("]")
+                                    idx = int(line[1:idx_end])
+                                    translation = line[idx_end + 1:].strip()
+                                    if translation:
+                                        all_translations[idx] = translation
+                                        parsed_count += 1
+                                except (ValueError, IndexError):
+                                    continue
 
-                print(f"  Batch {batch_num + 1}/{total_batches}: translated {len(batch_texts)} segments")
+                print(f"  Batch {batch_num + 1}/{total_batches}: parsed {parsed_count}/{len(batch_texts)} segments")
 
             except Exception as e:
                 print(f"Error in translate_batch (batch {batch_num + 1}): {e}")

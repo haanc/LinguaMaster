@@ -4,8 +4,6 @@ Provides caching layer for subtitle translations to reduce AI API calls.
 """
 
 from typing import Dict, List, Optional, Tuple
-from uuid import UUID
-from functools import lru_cache
 import hashlib
 
 

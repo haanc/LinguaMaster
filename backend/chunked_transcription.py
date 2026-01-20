@@ -243,6 +243,76 @@ class ChunkedTranscriptionService:
 
         return all_segments
 
+    def _merge_short_segments(
+        self,
+        segments: List[Dict[str, Any]],
+        min_duration: float = 2.0,
+        max_merged_duration: float = 15.0
+    ) -> List[Dict[str, Any]]:
+        """
+        Merge short segments that don't end with sentence-ending punctuation.
+
+        Args:
+            segments: Sorted list of segments
+            min_duration: Minimum segment duration (seconds) before considering merge
+            max_merged_duration: Maximum duration of merged segment
+
+        Returns:
+            List of segments with short fragments merged
+        """
+        if not segments:
+            return segments
+
+        # Sentence-ending punctuation (including CJK)
+        sentence_endings = {'.', '!', '?', '。', '！', '？', '…'}
+
+        merged = []
+        current = None
+
+        for seg in segments:
+            if current is None:
+                current = seg.copy()
+                continue
+
+            current_duration = current["end_time"] - current["start_time"]
+            seg_duration = seg["end_time"] - seg["start_time"]
+            current_text = current["text"].strip()
+
+            # Check if current segment ends with sentence-ending punctuation
+            ends_with_punctuation = current_text and current_text[-1] in sentence_endings
+
+            # Merge conditions:
+            # 1. Current segment is short AND doesn't end with punctuation
+            # 2. Merged duration won't exceed max
+            # 3. Gap between segments is small (< 1 second)
+            gap = seg["start_time"] - current["end_time"]
+            merged_duration = seg["end_time"] - current["start_time"]
+
+            should_merge = (
+                current_duration < min_duration and
+                not ends_with_punctuation and
+                merged_duration <= max_merged_duration and
+                gap < 1.0
+            )
+
+            if should_merge:
+                # Merge: extend current segment
+                current["end_time"] = seg["end_time"]
+                current["text"] = current["text"].strip() + " " + seg["text"].strip()
+            else:
+                # Don't merge: save current and start new
+                merged.append(current)
+                current = seg.copy()
+
+        # Don't forget the last segment
+        if current is not None:
+            merged.append(current)
+
+        if len(merged) < len(segments):
+            print(f"  Merged {len(segments)} segments -> {len(merged)} segments")
+
+        return merged
+
     def merge_segments(
         self,
         segments: List[Dict[str, Any]],
@@ -270,13 +340,16 @@ class ChunkedTranscriptionService:
         # Sort by start_time to ensure correct order
         sorted_segments = sorted(segments, key=lambda s: s["start_time"])
 
+        # Merge short segments that don't end with sentence-ending punctuation
+        merged_segments = self._merge_short_segments(sorted_segments)
+
         # Reindex
-        for i, seg in enumerate(sorted_segments):
+        for i, seg in enumerate(merged_segments):
             seg["index"] = i
             # Remove chunk_index as it's no longer needed
             seg.pop("chunk_index", None)
 
-        return sorted_segments
+        return merged_segments
 
     def cleanup_chunks(self, chunks: List[ChunkInfo]):
         """Remove temporary chunk files."""

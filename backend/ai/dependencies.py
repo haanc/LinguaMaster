@@ -73,17 +73,3 @@ def get_request_llm_provider(
             status_code=400,
             detail=str(e)
         )
-
-
-async def get_optional_llm_provider(
-    x_llm_config: Optional[str] = Header(None, alias="X-LLM-Config")
-) -> Optional[LLMProvider]:
-    """
-    Optional version - returns None if no config provided instead of falling back.
-
-    Useful for endpoints that want to explicitly check if user has configured LLM.
-    """
-    if not x_llm_config:
-        return None
-
-    return get_request_llm_provider(x_llm_config)
