@@ -18,6 +18,15 @@
 
 ---
 
+## v0.0.7 更新内容
+
+- **修复：** 应用重启后视频播放 500 错误（孤儿 Python 进程导致端口冲突）
+- **修复：** AI 导师无响应（LangGraph 1.0.6 缺失 cache 模块）
+- **优化：** Windows 后端进程清理 - 正确终止子进程
+- **优化：** 启动时孤儿进程检测和清理
+
+---
+
 ## 功能特性
 
 ### 核心功能
@@ -196,11 +205,14 @@ LOCAL_WHISPER_DEVICE=auto
 # 终端 1: 启动后端
 cd backend
 .\venv\Scripts\activate  # Windows
-uvicorn main:app --reload --port 8000
+python main.py
+# 或: uvicorn main:app --port 8000 (不要用 --reload)
 
 # 终端 2: 启动前端
 npm run dev
 ```
+
+> **重要：** 请勿使用 `uvicorn main:app --reload`，reload 模式与视频下载的 BackgroundTasks 冲突。
 
 **构建安装包：**
 

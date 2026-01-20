@@ -186,7 +186,35 @@ async function waitForBackendReady(maxWaitMs: number = 60000): Promise<boolean> 
   return false
 }
 
-function startPythonBackend() {
+async function killExistingBackend(): Promise<void> {
+  if (process.platform !== 'win32') return
+
+  console.log('Checking for orphaned backend processes...')
+  try {
+    // Find and kill any Python processes running our backend
+    const { execSync } = require('child_process')
+    const output = execSync(
+      'wmic process where "CommandLine like \'%backend-dist%main.py%\'" get ProcessId 2>nul',
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }
+    )
+    const pids = output.split('\n')
+      .map((line: string) => line.trim())
+      .filter((line: string) => /^\d+$/.test(line))
+
+    for (const pid of pids) {
+      console.log('Killing orphaned backend process:', pid)
+      try {
+        execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore' })
+      } catch {
+        // Ignore errors - process may have already exited
+      }
+    }
+  } catch {
+    // wmic command failed, ignore
+  }
+}
+
+async function startPythonBackend() {
   // Check multiple indicators for dev mode
   const isDev = VITE_DEV_SERVER_URL != null ||
                 process.env.NODE_ENV === 'development' ||
@@ -197,19 +225,24 @@ function startPythonBackend() {
     // In dev mode, check if backend is already running
     backendStatus = 'starting'
     sendBackendStatus()
-    waitForBackendReady(5000).then(ready => {
-      if (ready) {
-        backendStatus = 'ready'
-        console.log('Dev mode: Backend is already running')
-      } else {
-        backendStatus = 'error'
-        backendError = 'Backend not running. Please start it manually with: cd backend && uvicorn main:app --reload'
-        console.log('Dev mode: Backend not detected, please start manually')
-      }
-      sendBackendStatus()
-    })
+    const ready = await waitForBackendReady(5000)
+    if (ready) {
+      backendStatus = 'ready'
+      console.log('Dev mode: Backend is already running')
+    } else {
+      backendStatus = 'error'
+      backendError = 'Backend not running. Please start it manually with: cd backend && uvicorn main:app --reload'
+      console.log('Dev mode: Backend not detected, please start manually')
+    }
+    sendBackendStatus()
     return
   }
+
+  // Production mode: Clean up any orphaned backend processes first
+  await killExistingBackend()
+
+  // Brief wait for port to be released
+  await new Promise(resolve => setTimeout(resolve, 500))
 
   backendStatus = 'starting'
   backendError = null
@@ -391,9 +424,21 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
-  if (pyProcess) {
-    console.log('Terminating Python backend...')
-    pyProcess.kill()
+  if (pyProcess && pyProcess.pid) {
+    console.log('Terminating Python backend (PID:', pyProcess.pid, ')...')
+    // On Windows, kill() may not work with shell: true
+    // Use taskkill to forcefully terminate the process tree
+    if (process.platform === 'win32') {
+      try {
+        require('child_process').execSync(`taskkill /PID ${pyProcess.pid} /T /F`, { stdio: 'ignore' })
+        console.log('Python backend terminated via taskkill')
+      } catch (e) {
+        console.warn('taskkill failed, trying kill():', e)
+        pyProcess.kill('SIGKILL')
+      }
+    } else {
+      pyProcess.kill('SIGKILL')
+    }
   }
 })
 
@@ -403,9 +448,9 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   registerLocalProtocol()
   handleIpc()
-  startPythonBackend()
+  await startPythonBackend()
   createWindow()
 })

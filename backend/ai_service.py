@@ -271,30 +271,57 @@ class AIService:
         llm_provider: "LLMProvider",
     ) -> Dict[str, Any]:
         """
-        Runs the tutor workflow using an externally provided LLM provider.
-
-        IMPORTANT: This method currently does NOT use the provided llm_provider.
-        The tutor chat feature uses a LangGraph workflow that is not yet compatible
-        with dynamic LLM injection. User-configured LLM settings are ignored for
-        this endpoint.
+        Runs the tutor chat using an externally provided LLM provider via LangGraph.
 
         Args:
             messages: Conversation history
             context_text: Optional context text for the tutor to reference
             target_language: Target language for responses
-            llm_provider: User's configured LLM provider (currently ignored)
+            llm_provider: User's configured LLM provider
 
         Returns:
-            Tutor response dictionary
-
-        TODO: Implement create_tutor_graph_with_llm() to support user-configured LLM
+            Tutor response dictionary with 'content' and 'role' keys
         """
-        # Log a warning so developers are aware of the limitation
-        print(f"WARNING: chat_with_tutor_with_provider ignores user LLM config. "
-              f"Using server default instead of {llm_provider.name}")
+        try:
+            from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+            from ai.graph import create_tutor_graph_with_llm
 
-        # Fall back to default tutor graph which uses server-configured LLM
-        return self.chat_with_tutor(messages, context_text, target_language)
+            # Get chat model from provider
+            llm = llm_provider.get_chat_model(temperature=0.7)
+
+            # Create tutor graph with user's LLM
+            tutor_graph = create_tutor_graph_with_llm(llm)
+
+            # Convert message dicts to LangChain message objects
+            lc_messages = []
+            for m in messages:
+                role = m.get("role", "user")
+                content = m.get("content", "")
+                if role == "user":
+                    lc_messages.append(HumanMessage(content=content))
+                elif role == "assistant":
+                    lc_messages.append(AIMessage(content=content))
+                elif role == "system":
+                    lc_messages.append(SystemMessage(content=content))
+
+            # Prepare input state for LangGraph
+            input_state = {
+                "messages": lc_messages,
+                "context_text": context_text or "",
+                "target_language": target_language,
+            }
+
+            # Invoke the graph
+            result = tutor_graph.invoke(input_state)
+            last_message = result["messages"][-1]
+
+            return {"content": last_message.content, "role": "assistant"}
+
+        except Exception as e:
+            print(f"Error in chat_with_tutor_with_provider: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e)}
 
     def translate_batch(
         self,

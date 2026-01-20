@@ -9,7 +9,7 @@ langchain>=0.1.0
 langchain-openai
 langchain-community
 langchain-core
-langgraph
+langgraph==1.0.5  # Pin to 1.0.5 - version 1.0.6 has missing langgraph.cache module
 pydantic>=2.0
 httpx
 

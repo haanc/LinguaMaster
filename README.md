@@ -18,6 +18,15 @@
 
 ---
 
+## What's New in v0.0.7
+
+- **Fixed:** Video playback 500 error after app restart (orphaned Python processes causing port conflicts)
+- **Fixed:** AI Tutor not responding (LangGraph 1.0.6 missing cache module)
+- **Improved:** Backend process cleanup on Windows - proper termination of child processes
+- **Improved:** Startup orphan process detection and cleanup
+
+---
+
 ## Features
 
 ### Core Functionality

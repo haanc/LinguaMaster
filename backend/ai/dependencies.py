@@ -17,6 +17,7 @@ from .providers.llm import (
     get_llm_provider,
     get_llm_provider_from_request,
 )
+from .config import get_config
 
 
 def get_request_llm_provider(
@@ -40,10 +41,18 @@ def get_request_llm_provider(
         An LLMProvider instance
 
     Raises:
-        HTTPException: If the configuration is invalid
+        HTTPException: If the configuration is invalid or no LLM is configured
     """
-    # No user config provided - use environment-based defaults
+    # No user config provided - check if server has LLM configured
     if not x_llm_config:
+        config = get_config()
+        # Check if any LLM provider is configured on the server
+        if not config.azure.is_configured and not config.openai.is_configured:
+            # No server LLM configured, and no user config - require user to configure
+            raise HTTPException(
+                status_code=400,
+                detail="No LLM configured. Please configure an AI provider in Settings."
+            )
         return get_llm_provider()
 
     try:
