@@ -80,11 +80,7 @@ def chat_tutor(req: ChatRequest, llm_provider: LLMProvider = Depends(get_request
     Chat with the AI language tutor.
     The tutor only answers questions related to the provided context text.
 
-    NOTE: This endpoint currently ignores the X-LLM-Config header and uses
-    the server's default LLM configuration. User-configured LLM support for
-    the tutor chat is planned for a future release.
-
-    Accepts X-LLM-Config header for user-configured LLM (not yet implemented for chat).
+    Accepts X-LLM-Config header for user-configured LLM.
     """
     return ai_service.chat_with_tutor_with_provider(
         req.messages, req.context, req.target_language, llm_provider

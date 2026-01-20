@@ -3,6 +3,7 @@ AI Service Module
 Provides high-level AI functionality using abstracted providers.
 """
 
+import re
 from typing import List, Dict, Any, Optional, Callable
 
 # Provider imports
@@ -366,7 +367,7 @@ class AIService:
 
             system_prompt = (
                 f"You are a translator. Translate each numbered subtitle segment to {target_language}. "
-                "Keep the [number] prefix in your response. Only output translations, no explanations."
+                "Keep the [number] prefix in your response. Output one translation per line in format: [number] translation"
             )
 
             try:
@@ -376,45 +377,30 @@ class AIService:
                     {"role": "user", "content": batch_text},
                 ])
 
-                # Parse response
+                # Parse response - use regex to find all [number] patterns
                 result_text = response.content
 
-                # Split by --- separator first (same as input format)
-                # This handles multi-line translations better
-                segments = result_text.split("---")
-                parsed_count = 0
+                # Pattern: [number] followed by translation text until next [number] or end
+                # This handles both line-by-line and paragraph formats
+                pattern = r'\[(\d+)\]\s*([^\[]+)'
+                matches = re.findall(pattern, result_text, re.DOTALL)
 
-                for segment in segments:
-                    segment = segment.strip()
-                    if not segment:
+                parsed_count = 0
+                for idx_str, translation in matches:
+                    try:
+                        idx = int(idx_str)
+                        # Clean up translation: remove trailing separators and whitespace
+                        translation = translation.strip().rstrip('-').strip()
+                        if translation:
+                            all_translations[idx] = translation
+                            parsed_count += 1
+                    except (ValueError, IndexError) as e:
+                        print(f"  Warning: Failed to parse index {idx_str}: {e}")
                         continue
 
-                    # Try to find [number] at the start
-                    if segment.startswith("["):
-                        try:
-                            idx_end = segment.index("]")
-                            idx = int(segment[1:idx_end])
-                            translation = segment[idx_end + 1:].strip()
-                            if translation:
-                                all_translations[idx] = translation
-                                parsed_count += 1
-                        except (ValueError, IndexError) as e:
-                            print(f"  Warning: Failed to parse segment: {segment[:50]}... Error: {e}")
-                            continue
-                    else:
-                        # Fallback: try line-by-line parsing for backwards compatibility
-                        for line in segment.split("\n"):
-                            line = line.strip()
-                            if line.startswith("["):
-                                try:
-                                    idx_end = line.index("]")
-                                    idx = int(line[1:idx_end])
-                                    translation = line[idx_end + 1:].strip()
-                                    if translation:
-                                        all_translations[idx] = translation
-                                        parsed_count += 1
-                                except (ValueError, IndexError):
-                                    continue
+                # Debug: if parsing failed, show raw response
+                if parsed_count < len(batch_texts) // 2:
+                    print(f"  Warning: Low parse rate. Response sample: {result_text[:200]}...")
 
                 print(f"  Batch {batch_num + 1}/{total_batches}: parsed {parsed_count}/{len(batch_texts)} segments")
 

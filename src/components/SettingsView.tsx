@@ -53,6 +53,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onOpenLLMSettings }) => {
                     </button>
                 </div>
             </div>
+
+            <div className="settings-footer">
+                <span className="version-info">Version {__APP_VERSION__}</span>
+            </div>
         </div>
     );
 };

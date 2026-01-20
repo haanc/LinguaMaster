@@ -129,3 +129,17 @@
     background: rgba(139, 92, 246, 0.3);
     border-color: #8b5cf6;
 }
+
+/* Settings Footer - Version Info */
+.settings-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.version-info {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 400;
+}
