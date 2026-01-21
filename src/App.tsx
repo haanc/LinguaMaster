@@ -728,6 +728,26 @@ function App() {
                     className="main-video"
                   />
 
+                  {/* Double-click overlay to intercept clicks and trigger custom fullscreen */}
+                  <div
+                    className="video-click-overlay"
+                    onDoubleClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      togglePlayerFullscreen();
+                    }}
+                    onClick={() => {
+                      // Single click toggles play/pause
+                      if (videoRef.current) {
+                        if (videoRef.current.paused) {
+                          videoRef.current.play();
+                        } else {
+                          videoRef.current.pause();
+                        }
+                      }
+                    }}
+                  />
+
                   {/* Custom fullscreen button - toggles wrapper fullscreen for subtitle visibility */}
                   <button
                     className="custom-fullscreen-btn"

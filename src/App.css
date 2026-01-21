@@ -397,6 +397,17 @@ button:hover {
   border-radius: 8px;
 }
 
+/* Transparent overlay to capture double-click for custom fullscreen */
+.video-click-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 40px); /* Leave space for video controls at bottom */
+  z-index: 5; /* Above video but below controls, subtitles, and buttons */
+  cursor: pointer;
+}
+
 /* Hide native fullscreen button from video controls */
 .main-video::-webkit-media-controls-fullscreen-button {
   display: none !important;

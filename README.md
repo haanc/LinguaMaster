@@ -13,48 +13,20 @@
 </p>
 
 <p align="center">
-  <a href="./README.zh-CN.md">中文</a> | English
+  <a href="#english">English</a> |
+  <a href="#中文">中文</a> |
+  <a href="#日本語">日本語</a>
 </p>
 
 ---
 
-## What's New in v0.0.9
+<a name="english"></a>
 
-### UI/UX Improvements (7 fixes)
+## 🌍 English
 
-- **New:** Draggable Learning Panel - reposition the learning panel anywhere on screen
-- **New:** Draggable & Resizable Subtitles - drag subtitles, resize horizontally, glassmorphism effect
-- **New:** Toast Notifications - modern toast notifications replace native alert() dialogs
-- **Fixed:** Startup screen icon not loading
-- **Fixed:** Fullscreen subtitle display - subtitles now visible in fullscreen mode
-- **Fixed:** Responsive subtitle positioning - subtitles maintain relative position when window resizes
-- **Fixed:** LLM settings scrollbar styling unified with dark theme
+### Features
 
-<details>
-<summary>Previous: v0.0.8</summary>
-
-- **New:** Settings page now displays app version number
-- **Fixed:** Translation parsing issue - improved regex-based parsing for batch translations
-- **Fixed:** Chat endpoint documentation - removed outdated comments
-- **Optimized:** Removed 61 lines of dead code (audio_service.py)
-- **Optimized:** VAD parameters tuned (400ms → 700ms) for better transcription segmentation
-- **Improved:** Smart merging of short subtitle segments
-</details>
-
-<details>
-<summary>Previous: v0.0.7</summary>
-
-- **Fixed:** Video playback 500 error after app restart (orphaned Python processes causing port conflicts)
-- **Fixed:** AI Tutor not responding (LangGraph 1.0.6 missing cache module)
-- **Improved:** Backend process cleanup on Windows - proper termination of child processes
-- **Improved:** Startup orphan process detection and cleanup
-</details>
-
----
-
-## Features
-
-### Core Functionality
+#### Core Functionality
 
 - **Video Import** - Support local videos or download via URL (powered by yt-dlp, supports YouTube, Bilibili, etc.)
 - **AI Subtitle Generation** - Automatic transcription with timestamps using OpenAI Whisper / faster-whisper
@@ -63,8 +35,9 @@
 - **AI Context Explanation** - Select sentences for grammar analysis and cultural background
 - **AI Language Tutor** - Context-aware conversation practice based on video content
 - **Spaced Repetition Review** - SM-2 algorithm-powered vocabulary notebook with scientific review scheduling
+- **Draggable UI Elements** - Repositionable learning panel and subtitles with glassmorphism effects
 
-### Technical Highlights
+#### Technical Highlights
 
 - **Multi-layer Translation Cache** - Database → Memory → AI API three-tier caching for reduced API calls
 - **Provider Abstraction Layer** - Flexibly switch between Azure OpenAI / OpenAI / Ollama / local models
@@ -75,79 +48,9 @@
 
 ---
 
-## Tech Stack
+### Installation
 
-### Frontend
-
-| Technology | Purpose |
-|------------|---------|
-| [React](https://reactjs.org/) + [TypeScript](https://www.typescriptlang.org/) | UI Framework |
-| [Vite](https://vitejs.dev/) | Build Tool |
-| [Electron](https://www.electronjs.org/) | Desktop Runtime |
-| [TanStack Query](https://tanstack.com/query) | State Management & Data Caching |
-| [Radix UI](https://www.radix-ui.com/) | Accessible Component Library |
-| [i18next](https://www.i18next.com/) | Internationalization |
-
-### Backend
-
-| Technology | Purpose |
-|------------|---------|
-| [FastAPI](https://fastapi.tiangolo.com/) | API Server |
-| [SQLModel](https://sqlmodel.tiangolo.com/) | ORM (SQLite) |
-| [LangChain](https://www.langchain.com/) | LLM Orchestration |
-| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | Local Speech-to-Text |
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Video Download |
-
-### AI Model Support
-
-- **Azure OpenAI** - GPT-4o / GPT-4 / Reasoning models
-- **Azure APIM** - API Management proxy support
-- **OpenAI** - GPT-4 Turbo / GPT-4o
-- **Ollama** - Local models (Llama, Mistral, etc.)
-- **Whisper** - Speech-to-text (Azure / OpenAI / Local faster-whisper)
-
----
-
-## Project Structure
-
-```
-LinguaMaster/
-├── src/                      # React Frontend
-│   ├── components/           # UI Components
-│   │   ├── SubtitleSidebar   # Interactive subtitle panel
-│   │   ├── WordPopover       # Word popup card
-│   │   ├── TutorPanel        # AI tutor panel
-│   │   ├── LibraryGrid       # Media library grid
-│   │   ├── NotebookView      # Vocabulary notebook
-│   │   └── Settings/         # LLM configuration
-│   ├── services/api.ts       # API client
-│   ├── i18n/                 # Internationalization
-│   └── types/generated.ts    # Auto-generated types
-│
-├── backend/                  # Python Backend
-│   ├── main.py               # FastAPI entry point
-│   ├── routes/               # API route modules
-│   │   ├── media.py          # Media CRUD, transcription, translation
-│   │   ├── vocab.py          # Vocabulary & SRS review
-│   │   ├── ai.py             # AI feature endpoints
-│   │   └── streaming.py      # Video stream proxy
-│   ├── ai/                   # AI service layer
-│   │   ├── config.py         # Unified configuration
-│   │   ├── providers/        # LLM/Whisper abstraction
-│   │   └── chains.py         # LangChain chains
-│   └── models.py             # Database models
-│
-├── electron/                 # Electron main process
-├── scripts/                  # Build scripts
-│   └── prepare-backend.ps1   # Backend packaging (Python Embeddable)
-└── docs/                     # Documentation
-```
-
----
-
-## Quick Start
-
-### Download & Install
+#### Option 1: Download Installer (Recommended)
 
 1. Download the latest installer from [Releases](https://github.com/haanc/LinguaMaster/releases)
 2. Run `LinguaMaster Setup x.x.x.exe`
@@ -155,20 +58,18 @@ LinguaMaster/
 
 **That's it!** The app automatically downloads required dependencies (yt-dlp, FFmpeg) on first launch.
 
-> **Note:** First startup may take 1-2 minutes while dependencies are downloaded and the backend initializes. The app allows up to 60 seconds for backend startup. Subsequent launches are much faster.
+> **Note:** First startup may take 1-2 minutes while dependencies are downloaded. Subsequent launches are much faster.
 
----
+#### Option 2: Run from Source (Command Line)
 
-### Build from Source
-
-#### Requirements
+##### Requirements
 
 - **Node.js** >= 18
 - **Python** >= 3.10
-- **FFmpeg** - Must be in system PATH
-- **yt-dlp** - Must be in system PATH
+- **FFmpeg** - Required for audio processing
+- **yt-dlp** - Required for video downloads
 
-#### Installation
+##### Installation Steps
 
 ```bash
 # 1. Clone repository
@@ -182,7 +83,7 @@ python -m venv venv
 # Windows:
 .\venv\Scripts\activate
 # macOS/Linux:
-# source venv/bin/activate
+source venv/bin/activate
 
 pip install -r requirements.txt
 cd ..
@@ -191,7 +92,7 @@ cd ..
 npm install
 ```
 
-### Configure AI Services
+##### Configure AI Services
 
 Copy the configuration template and add your API keys:
 
@@ -222,7 +123,7 @@ LOCAL_WHISPER_MODEL=base
 LOCAL_WHISPER_DEVICE=auto
 ```
 
-### Run the App
+##### Run the Application
 
 **Development mode:**
 
@@ -230,14 +131,14 @@ LOCAL_WHISPER_DEVICE=auto
 # Terminal 1: Start backend
 cd backend
 .\venv\Scripts\activate  # Windows
+# source venv/bin/activate  # macOS/Linux
 python main.py
-# Or: uvicorn main:app --port 8000 (without --reload)
 
-# Terminal 2: Start frontend
+# Terminal 2: Start frontend (in project root)
 npm run dev
 ```
 
-> **Important:** Do NOT use `uvicorn main:app --reload` as it conflicts with BackgroundTasks used for video downloading. Always run without reload mode.
+> **Important:** Do NOT use `uvicorn main:app --reload` as it conflicts with BackgroundTasks used for video downloading.
 
 **Build installer:**
 
@@ -253,44 +154,25 @@ The installer will be created in the `release/` directory.
 
 ---
 
-## Usage Guide
+### Usage Guide
 
-### 1. Import Videos
-
-- Click the **"+ Add Video"** button
-- Paste a YouTube / Bilibili video URL
-- Wait for download and AI transcription to complete
-
-### 2. Learning Mode
-
-- **Click a word** → View definition, pronunciation, translation
-- **Click 🌐** → Enable bilingual subtitles
-- **Click ✨** → AI analysis of grammar and cultural context
-- **Select text** → Right-click menu for more options
-
-### 3. Vocabulary Notebook
-
-- Click **"Save"** on word cards to add to vocabulary
-- View and review in the **Notebook** tab
-- SM-2 algorithm intelligently schedules review times
-
-### 4. Configure AI Provider
-
-- Click the **Settings** icon in the sidebar
-- Add your preferred LLM provider (Azure APIM, OpenAI, Ollama, etc.)
-- API keys are stored locally and never sent to external servers
+1. **Import Videos** - Click "+ Add Video" and paste a YouTube/Bilibili URL
+2. **Learning Mode** - Click words for definitions, enable bilingual subtitles with 🌐
+3. **AI Features** - Use ✨ for grammar analysis, chat with AI tutor
+4. **Vocabulary** - Save words to notebook, review with SM-2 scheduling
+5. **Settings** - Configure your preferred AI provider (Azure, OpenAI, Ollama)
 
 ---
 
-## Development
+### Tech Stack
 
-### Generate TypeScript Types
+| Layer | Technologies |
+|-------|-------------|
+| Frontend | React, TypeScript, Vite, Electron, TanStack Query, Radix UI, i18next |
+| Backend | FastAPI, SQLModel (SQLite), LangChain, faster-whisper, yt-dlp |
+| AI Models | Azure OpenAI, OpenAI, Ollama, Whisper (local/cloud) |
 
-After modifying Python models, sync types:
-
-```bash
-npm run gen:types
-```
+---
 
 ### Available Scripts
 
@@ -301,39 +183,302 @@ npm run gen:types
 | `npm run build` | Build production version |
 | `npm run build:prepare` | Package backend with Python Embeddable |
 | `npm run build:full` | Full build (backend + frontend) |
-| `npm run gen:types` | Generate TypeScript types |
+| `npm run gen:types` | Generate TypeScript types from Python models |
 
 ---
 
-## Troubleshooting
-
-### Common Issues
+### Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| **"Backend failed to respond within 60 seconds"** | This can happen on first launch. Wait a moment and restart the app. If persistent, check if port 8000 is in use by another application. |
-| **Video import fails with 500 error** | Ensure you're running the backend without `--reload` flag in development mode. |
-| **FFmpeg/yt-dlp not found** | The app auto-downloads these on first launch. If it fails, manually install them and add to system PATH. |
-| **API key errors** | Double-check your `.env` configuration. API keys are case-sensitive. |
+| Backend fails to start | Check if port 8000 is in use. Kill orphan Python processes. |
+| Video import fails | Ensure FFmpeg and yt-dlp are installed (auto-downloaded in installer version). |
+| API key errors | Verify your `.env` configuration. Keys are case-sensitive. |
 
 ---
 
-## Contributing
+### License
 
-Pull requests are welcome! Before submitting, please ensure:
-
-1. Code passes ESLint checks
-2. New features include appropriate tests
-3. Documentation is updated
+[MIT](LICENSE)
 
 ---
 
-## License
+<a name="中文"></a>
+
+## 🇨🇳 中文
+
+### 功能特性
+
+#### 核心功能
+
+- **视频导入** - 支持本地视频或通过 URL 直接下载（基于 yt-dlp，支持 YouTube、Bilibili 等）
+- **AI 字幕生成** - 使用 OpenAI Whisper / faster-whisper 自动转录并生成时间戳字幕
+- **双语字幕** - 一键翻译字幕，支持中、英、日、法、德、西班牙语等多语言
+- **交互式词典** - 点击任意单词即时获取定义、发音、翻译和例句
+- **AI 语境解释** - 选中句子获取语法分析和文化背景解读
+- **AI 语言导师** - 基于视频内容的上下文感知对话练习
+- **间隔重复复习** - SM-2 算法驱动的生词本，科学安排复习计划
+- **可拖拽界面元素** - 可重新定位的学习面板和字幕，支持磨砂玻璃效果
+
+#### 技术亮点
+
+- **多层翻译缓存** - 数据库 → 内存 → AI API 三级缓存，显著降低 API 调用
+- **Provider 抽象层** - 灵活切换 Azure OpenAI / OpenAI / Ollama 本地模型
+- **类型安全** - Python 模型自动生成 TypeScript 类型定义
+- **模块化架构** - 清晰的路由分层和服务解耦
+- **便携式打包** - 内置 Python 运行时的 Windows 安装包，开箱即用
+- **安全优先设计** - SSRF 防护、CORS 限制、基于所有者的授权检查
+
+---
+
+### 安装方式
+
+#### 方式一：下载安装包（推荐）
+
+1. 从 [Releases](https://github.com/haanc/LinguaMaster/releases) 下载最新安装包
+2. 运行 `LinguaMaster Setup x.x.x.exe`
+3. 启动应用，开始学习！
+
+**就这么简单！** 应用会在首次启动时自动下载所需依赖（yt-dlp、FFmpeg）。
+
+> **注意：** 首次启动可能需要 1-2 分钟下载依赖，之后的启动会很快。
+
+#### 方式二：从源码运行（命令行）
+
+##### 环境要求
+
+- **Node.js** >= 18
+- **Python** >= 3.10
+- **FFmpeg** - 音频处理必需
+- **yt-dlp** - 视频下载必需
+
+##### 安装步骤
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/haanc/LinguaMaster.git
+cd LinguaMaster
+
+# 2. 后端设置
+cd backend
+python -m venv venv
+
+# Windows:
+.\venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+pip install -r requirements.txt
+cd ..
+
+# 3. 前端设置
+npm install
+```
+
+##### 配置 AI 服务
+
+复制配置模板并填写你的 API 密钥：
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+**backend/.env** 示例：
+
+```ini
+# ===== Azure OpenAI（推荐）=====
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-api-key
+AZURE_OPENAI_API_VERSION=2024-02-01
+AZURE_OPENAI_DEPLOYMENT_CHAT=gpt-4o
+AZURE_OPENAI_DEPLOYMENT_WHISPER=whisper
+
+# ===== 或使用 OpenAI =====
+# OPENAI_API_KEY=sk-your-key
+# OPENAI_MODEL_NAME=gpt-4-turbo
+
+# ===== 或使用 Ollama 本地模型 =====
+# OLLAMA_BASE_URL=http://localhost:11434
+# OLLAMA_MODEL_NAME=llama3
+
+# ===== 本地 Whisper（默认）=====
+LOCAL_WHISPER_MODEL=base
+LOCAL_WHISPER_DEVICE=auto
+```
+
+##### 运行应用
+
+**开发模式：**
+
+```bash
+# 终端 1: 启动后端
+cd backend
+.\venv\Scripts\activate  # Windows
+# source venv/bin/activate  # macOS/Linux
+python main.py
+
+# 终端 2: 启动前端（在项目根目录）
+npm run dev
+```
+
+> **重要：** 请勿使用 `uvicorn main:app --reload`，reload 模式与视频下载的 BackgroundTasks 冲突。
+
+**构建安装包：**
+
+```bash
+# 准备后端（下载 Python Embeddable）
+npm run build:prepare
+
+# 构建 Electron 应用
+npm run build
+```
+
+安装包将生成在 `release/` 目录。
+
+---
+
+### 使用指南
+
+1. **导入视频** - 点击 "+ 添加视频"，粘贴 YouTube/Bilibili 链接
+2. **学习模式** - 点击单词查看定义，点击 🌐 开启双语字幕
+3. **AI 功能** - 使用 ✨ 进行语法分析，与 AI 导师对话
+4. **生词本** - 保存单词到笔记本，使用 SM-2 算法复习
+5. **设置** - 配置你偏好的 AI 提供商（Azure、OpenAI、Ollama）
+
+---
+
+### 技术栈
+
+| 层级 | 技术 |
+|------|-----|
+| 前端 | React, TypeScript, Vite, Electron, TanStack Query, Radix UI, i18next |
+| 后端 | FastAPI, SQLModel (SQLite), LangChain, faster-whisper, yt-dlp |
+| AI 模型 | Azure OpenAI, OpenAI, Ollama, Whisper（本地/云端）|
+
+---
+
+### 可用脚本
+
+| 命令 | 说明 |
+|------|------|
+| `npm run dev` | 启动 Electron 开发模式 |
+| `npm run dev:web` | 仅启动 Web 开发服务器 |
+| `npm run build` | 构建生产版本 |
+| `npm run build:prepare` | 打包后端（含 Python Embeddable）|
+| `npm run build:full` | 完整构建（后端 + 前端）|
+| `npm run gen:types` | 从 Python 模型生成 TypeScript 类型 |
+
+---
+
+### 常见问题
+
+| 问题 | 解决方案 |
+|------|---------|
+| 后端启动失败 | 检查端口 8000 是否被占用，终止孤儿 Python 进程。|
+| 视频导入失败 | 确保 FFmpeg 和 yt-dlp 已安装（安装包版本会自动下载）。|
+| API 密钥错误 | 检查 `.env` 配置，密钥区分大小写。|
+
+---
+
+### 许可证
+
+[MIT](LICENSE)
+
+---
+
+<a name="日本語"></a>
+
+## 🇯🇵 日本語
+
+### 機能
+
+#### コア機能
+
+- **動画インポート** - ローカル動画またはURL経由でダウンロード（yt-dlp対応、YouTube、Bilibiliなど）
+- **AI字幕生成** - OpenAI Whisper / faster-whisperによる自動文字起こしとタイムスタンプ付き字幕
+- **バイリンガル字幕** - ワンクリックで翻訳、中国語、英語、日本語、フランス語、ドイツ語、スペイン語など対応
+- **インタラクティブ辞書** - 単語をクリックして定義、発音、翻訳、例文を即座に取得
+- **AIコンテキスト解説** - 文を選択して文法分析と文化的背景を取得
+- **AI言語チューター** - 動画コンテンツに基づいたコンテキスト対応会話練習
+- **間隔反復復習** - SM-2アルゴリズムによる科学的な復習スケジューリング
+- **ドラッグ可能なUI要素** - 学習パネルと字幕を自由に配置、グラスモーフィズム効果付き
+
+---
+
+### インストール
+
+#### オプション1：インストーラーをダウンロード（推奨）
+
+1. [Releases](https://github.com/haanc/LinguaMaster/releases)から最新のインストーラーをダウンロード
+2. `LinguaMaster Setup x.x.x.exe`を実行
+3. アプリを起動して学習開始！
+
+**これだけです！** 初回起動時に必要な依存関係（yt-dlp、FFmpeg）は自動でダウンロードされます。
+
+#### オプション2：ソースからビルド（コマンドライン）
+
+##### 要件
+
+- **Node.js** >= 18
+- **Python** >= 3.10
+- **FFmpeg** - オーディオ処理に必要
+- **yt-dlp** - 動画ダウンロードに必要
+
+##### インストール手順
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/haanc/LinguaMaster.git
+cd LinguaMaster
+
+# 2. バックエンドセットアップ
+cd backend
+python -m venv venv
+
+# Windows:
+.\venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+pip install -r requirements.txt
+cd ..
+
+# 3. フロントエンドセットアップ
+npm install
+```
+
+##### アプリケーションの実行
+
+**開発モード：**
+
+```bash
+# ターミナル1: バックエンド起動
+cd backend
+.\venv\Scripts\activate  # Windows
+python main.py
+
+# ターミナル2: フロントエンド起動（プロジェクトルートで）
+npm run dev
+```
+
+---
+
+### 使用ガイド
+
+1. **動画をインポート** - 「+ 動画を追加」をクリックし、YouTube/BilibiliのURLを貼り付け
+2. **学習モード** - 単語をクリックして定義を表示、🌐でバイリンガル字幕を有効化
+3. **AI機能** - ✨で文法分析、AIチューターとチャット
+4. **単語帳** - 単語をノートブックに保存、SM-2スケジューリングで復習
+5. **設定** - お好みのAIプロバイダーを設定（Azure、OpenAI、Ollama）
+
+---
+
+### ライセンス
 
 [MIT](LICENSE)
 
 ---
 
 <p align="center">
-  Made with AI by <a href="https://github.com/haanc">@haanc</a>
+  Made with ❤️ by <a href="https://github.com/haanc">@haanc</a>
 </p>
