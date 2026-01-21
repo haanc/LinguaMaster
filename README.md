@@ -18,7 +18,20 @@
 
 ---
 
-## What's New in v0.0.8
+## What's New in v0.0.9
+
+### UI/UX Improvements (7 fixes)
+
+- **New:** Draggable Learning Panel - reposition the learning panel anywhere on screen
+- **New:** Draggable & Resizable Subtitles - drag subtitles, resize horizontally, glassmorphism effect
+- **New:** Toast Notifications - modern toast notifications replace native alert() dialogs
+- **Fixed:** Startup screen icon not loading
+- **Fixed:** Fullscreen subtitle display - subtitles now visible in fullscreen mode
+- **Fixed:** Responsive subtitle positioning - subtitles maintain relative position when window resizes
+- **Fixed:** LLM settings scrollbar styling unified with dark theme
+
+<details>
+<summary>Previous: v0.0.8</summary>
 
 - **New:** Settings page now displays app version number
 - **Fixed:** Translation parsing issue - improved regex-based parsing for batch translations
@@ -26,6 +39,7 @@
 - **Optimized:** Removed 61 lines of dead code (audio_service.py)
 - **Optimized:** VAD parameters tuned (400ms → 700ms) for better transcription segmentation
 - **Improved:** Smart merging of short subtitle segments
+</details>
 
 <details>
 <summary>Previous: v0.0.7</summary>
