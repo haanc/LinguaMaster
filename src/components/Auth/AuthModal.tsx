@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Mail, Lock, LogIn, UserPlus } from 'lucide-react';
 import { signIn, signUp } from '../../services/supabase';
+import { useToast } from '../../contexts/ToastContext';
 import './AuthModal.css';
 
 interface AuthModalProps {
@@ -13,6 +14,7 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
     const { t } = useTranslation();
+    const { showToast } = useToast();
     const [mode, setMode] = useState<'login' | 'signup'>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -35,7 +37,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             } else {
                 const { error } = await signUp(email, password);
                 if (error) throw error;
-                alert(t('auth.signUpSuccess'));
+                showToast(t('auth.signUpSuccess'), 'success');
                 setMode('login'); // Switch to login after signup
             }
         } catch (err: any) {

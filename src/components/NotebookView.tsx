@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, SavedWord } from '../services/api';
 import { LANGUAGE_NAMES } from '../i18n/languages';
+import { useToast } from '../contexts/ToastContext';
 import './NotebookView.css';
 
 // Include "All" for filter purposes
@@ -9,6 +10,7 @@ const FILTER_LANGUAGES = ["All", ...LANGUAGE_NAMES];
 
 const NotebookView: React.FC = () => {
     const { t } = useTranslation();
+    const { showToast } = useToast();
     const [words, setWords] = useState<SavedWord[]>([]);
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState<'list' | 'review'>('list');
@@ -59,7 +61,7 @@ const NotebookView: React.FC = () => {
             if (dueWords.length > 0) {
                 setMode('review');
             } else {
-                alert("No words due for review!");
+                showToast(t('notebook.noWordsDue', 'No words due for review!'), 'info');
             }
         } catch (e) {
             console.error(e);
@@ -81,12 +83,12 @@ const NotebookView: React.FC = () => {
             if (currentReviewIndex + 1 < reviewQueue.length) {
                 setCurrentReviewIndex(prev => prev + 1);
             } else {
-                alert("Review Session Complete! 🎉");
+                showToast(t('notebook.reviewComplete', 'Review Session Complete!'), 'success');
                 setMode('list');
                 fetchWords(); // Refresh list
             }
         } catch (e) {
-            alert("Failed to submit review");
+            showToast(t('notebook.reviewFailed', 'Failed to submit review'), 'error');
         }
     };
 

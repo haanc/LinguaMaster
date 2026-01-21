@@ -8,6 +8,7 @@ import {
   DEFAULT_BASE_URLS,
 } from "../../services/llmConfigStorage";
 import { api } from "../../services/api";
+import { useToast } from "../../contexts/ToastContext";
 import "./LLMSettingsModal.css";
 
 interface LLMSettingsModalProps {
@@ -19,6 +20,7 @@ export const LLMSettingsModal: React.FC<LLMSettingsModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { showToast } = useToast();
   const [configs, setConfigs] = useState<LLMConfig[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export const LLMSettingsModal: React.FC<LLMSettingsModalProps> = ({
 
   const handleSave = () => {
     if (!formName || !formApiKey) {
-      alert("请填写配置名称和 API Key");
+      showToast("请填写配置名称和 API Key", "warning");
       return;
     }
 
@@ -141,12 +143,12 @@ export const LLMSettingsModal: React.FC<LLMSettingsModalProps> = ({
         setTestStatus((prev) => ({ ...prev, [config.id]: "success" }));
       } else {
         setTestStatus((prev) => ({ ...prev, [config.id]: "error" }));
-        alert(`连接失败: ${response.data.error}`);
+        showToast(`连接失败: ${response.data.error}`, "error");
       }
     } catch (e: unknown) {
       setTestStatus((prev) => ({ ...prev, [config.id]: "error" }));
       const message = e instanceof Error ? e.message : "Unknown error";
-      alert(`测试失败: ${message}`);
+      showToast(`测试失败: ${message}`, "error");
     }
   };
 
