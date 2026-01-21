@@ -14,6 +14,7 @@ import LLMSetupReminder from './components/LLMSetupReminder'
 import { BackendStatus } from './components/BackendStatus'
 import { DepsSetup } from './components/DepsSetup'
 import { LLMSettingsModal } from './components/Settings/LLMSettingsModal'
+import { ToastProvider } from './contexts/ToastContext'
 import { api } from './services/api'
 import { llmConfigStorage } from './services/llmConfigStorage'
 import appIcon from './assets/icon.png'
@@ -80,6 +81,7 @@ function App() {
   const [vocabCount, setVocabCount] = useState<number>(0); // Current video vocab count
   const [reviewCount, setReviewCount] = useState<number>(0); // Words due for review
   const videoRef = useRef<HTMLVideoElement>(null)
+  const playerWrapperRef = useRef<HTMLDivElement>(null)
   const sidebarPanelRef = useRef<PanelImperativeHandle>(null)
 
   // Layout mode: 'compact' when playing, 'expanded' when paused/interacting
@@ -96,6 +98,7 @@ function App() {
   const [showLLMReminder, setShowLLMReminder] = useState(false);
   const [_depsReady, setDepsReady] = useState(false);
   const [backendReady, setBackendReady] = useState(false);
+  const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
 
   const { refetch } = useMediaList()
   const { data: segments = [], refetch: refetchSegments } = useSubtitleSegments(currentMedia?.id || null)
@@ -573,7 +576,30 @@ function App() {
     api.getReviewCount().then(setReviewCount).catch(console.error);
   }, []);
 
+  // Fullscreen toggle for player wrapper (to keep subtitles visible)
+  const togglePlayerFullscreen = useCallback(() => {
+    if (!playerWrapperRef.current) return;
+
+    if (!document.fullscreenElement) {
+      playerWrapperRef.current.requestFullscreen().catch(err => {
+        console.error('Failed to enter fullscreen:', err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
+  // Listen for fullscreen changes to update state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsPlayerFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   return (
+    <ToastProvider>
     <div className="app-layout">
       <TitleBar title="LinguaMaster" />
       <div className="main-content">
@@ -684,7 +710,7 @@ function App() {
           <div className="main-panel">
             {view === 'player' && videoPath ? (
               <div className="player-section">
-                <div className="player-wrapper">
+                <div className={`player-wrapper ${isPlayerFullscreen ? 'fullscreen' : ''}`} ref={playerWrapperRef}>
                   <video
                     key={videoPath} // Force remount on video change
                     ref={videoRef}
@@ -701,6 +727,15 @@ function App() {
                     }}
                     className="main-video"
                   />
+
+                  {/* Custom fullscreen button - toggles wrapper fullscreen for subtitle visibility */}
+                  <button
+                    className="custom-fullscreen-btn"
+                    onClick={togglePlayerFullscreen}
+                    title={isPlayerFullscreen ? '退出全屏' : '全屏播放（带字幕）'}
+                  >
+                    {isPlayerFullscreen ? '⊠' : '⛶'}
+                  </button>
 
                   <SubtitleOverlay
                     text={activeSegment?.text || null}
@@ -812,6 +847,7 @@ function App() {
       {/* Dependency Setup Modal - shows on first run if deps are missing */}
       <DepsSetup onComplete={() => setDepsReady(true)} />
     </div>
+    </ToastProvider>
   )
 }
 

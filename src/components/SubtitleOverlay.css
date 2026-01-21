@@ -1,32 +1,173 @@
+/* Subtitle Overlay - Draggable & Resizable Container */
+.subtitle-rnd {
+    z-index: 2147483647; /* Maximum z-index to stay above fullscreen video */
+    pointer-events: auto;
+}
+
+/* Fullscreen support - ensure subtitle stays visible */
+video:fullscreen ~ .subtitle-rnd,
+.player-wrapper:fullscreen .subtitle-rnd,
+:fullscreen .subtitle-rnd {
+    position: fixed !important;
+    z-index: 2147483647 !important;
+}
+
+.subtitle-rnd.dragging {
+    cursor: grabbing;
+}
+
+.subtitle-rnd.resizing {
+    cursor: ew-resize;
+}
+
+/* Main Subtitle Container - Glassmorphism */
 .subtitle-overlay {
-    position: absolute;
-    bottom: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
+    position: relative;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 8px;
     text-align: center;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    cursor: grab;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.subtitle-overlay:hover {
+    background: rgba(15, 23, 42, 0.75);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.subtitle-overlay:active {
+    cursor: grabbing;
+}
+
+/* Drag Hint */
+.subtitle-drag-hint {
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: -2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
     pointer-events: none;
-    /* Allow clicks to pass through to video */
-    z-index: 10;
-    width: auto;
-    max-width: 80%;
+}
+
+.subtitle-overlay:hover .subtitle-drag-hint {
+    opacity: 1;
+}
+
+/* Resize Hints */
+.subtitle-resize-hint {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.subtitle-resize-hint.left {
+    left: -12px;
+}
+
+.subtitle-resize-hint.right {
+    right: -12px;
+}
+
+.subtitle-overlay:hover .subtitle-resize-hint {
+    opacity: 1;
+}
+
+/* Subtitle Content */
+.subtitle-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .subtitle-overlay p {
     margin: 0;
-    text-shadow: 1px 1px 2px black;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    line-height: 1.4;
+    word-wrap: break-word;
 }
 
+/* Source text (original language) - Smaller default size */
 .subtitle-overlay .subtitle-source {
-    font-size: 1.5rem;
+    font-size: calc(1.15rem * var(--subtitle-font-scale, 1));
+    font-weight: 500;
     color: #ffffff;
 }
 
+/* Translation text - Even smaller */
 .subtitle-overlay .subtitle-translation {
-    font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.75);
+    font-size: calc(0.9rem * var(--subtitle-font-scale, 1));
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .subtitle-overlay {
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+
+    .subtitle-overlay .subtitle-source {
+        font-size: calc(1rem * var(--subtitle-font-scale, 1));
+    }
+
+    .subtitle-overlay .subtitle-translation {
+        font-size: calc(0.8rem * var(--subtitle-font-scale, 1));
+    }
+}
+
+/* Fullscreen Subtitle Overlay - Fixed position, no drag/resize */
+.subtitle-fullscreen-overlay {
+    position: fixed;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647;
+    max-width: 80%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.subtitle-fullscreen-overlay p {
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    line-height: 1.5;
+}
+
+.subtitle-fullscreen-overlay .subtitle-source {
+    font-size: calc(1.4rem * var(--subtitle-font-scale, 1));
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.subtitle-fullscreen-overlay .subtitle-translation {
+    font-size: calc(1.1rem * var(--subtitle-font-scale, 1));
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 400;
     margin-top: 4px;
 }

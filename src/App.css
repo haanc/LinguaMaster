@@ -349,6 +349,45 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #000;
+}
+
+/* Fullscreen mode for player wrapper */
+.player-wrapper.fullscreen {
+  background: #000;
+}
+
+.player-wrapper.fullscreen .main-video {
+  border-radius: 0;
+}
+
+/* Custom fullscreen button */
+.custom-fullscreen-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-wrapper:hover .custom-fullscreen-btn {
+  opacity: 1;
+}
+
+.custom-fullscreen-btn:hover {
+  background: rgba(99, 102, 241, 0.8);
 }
 
 .main-video {
@@ -356,6 +395,16 @@ button:hover {
   height: 100%;
   object-fit: contain;
   border-radius: 8px;
+}
+
+/* Hide native fullscreen button from video controls */
+.main-video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
+/* Firefox */
+.main-video::-moz-fullscreen-button {
+  display: none !important;
 }
 
 .ai-overlay {

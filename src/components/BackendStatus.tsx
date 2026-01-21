@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import appIcon from '../assets/icon.png';
 import './BackendStatus.css';
 
 type BackendStatusType = 'not_started' | 'starting' | 'ready' | 'error';
@@ -96,7 +97,7 @@ export function BackendStatus({ onReady }: BackendStatusProps) {
     <div className="backend-status-overlay">
       <div className="backend-status-card">
         <div className="app-logo-large">
-          <img src="/icon.png" alt="LinguaMaster" />
+          <img src={appIcon} alt="LinguaMaster" />
         </div>
         <h1>LinguaMaster</h1>
 
