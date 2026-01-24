@@ -57,6 +57,7 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
         const status = media.status || 'ready';
         if (status === 'ready') return t('card.ready');
         if (status === 'error') return t('card.error');
+        if (status === 'interrupted') return t('card.interrupted');
         if (status === 'cloud_only') return `${t('card.cloud')} ☁️`;
         // For processing states, parse progress_message and translate
         if (media.progress_message) {
@@ -83,13 +84,29 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
     }
 
     const isProcessing = (status: string) => {
-        return status !== 'ready' && status !== 'error' && status !== 'cloud_only';
+        return status !== 'ready' && status !== 'error' && status !== 'cloud_only' && status !== 'interrupted';
+    }
+
+    const isRetryable = (status: string) => {
+        return status === 'interrupted' || status === 'error';
+    }
+
+    const handleRetry = async (mediaId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await api.retryMedia(mediaId);
+            // Refresh media list to show new status
+            fetchMedia();
+        } catch (error) {
+            console.error("Failed to retry media", error);
+        }
     }
 
     const getStatusClass = (status: string) => {
         switch (status) {
             case 'ready': return 'status-ready';
             case 'error': return 'status-error';
+            case 'interrupted': return 'status-interrupted';
             case 'cloud_only': return 'status-cloud-only';
             default: return 'status-processing';
         }
@@ -180,17 +197,29 @@ const LibraryGrid: React.FC<LibraryGridProps> = ({
                                                 </button>
                                             </div>
                                         ) : (
-                                            <button
-                                                type="button"
-                                                className="delete-btn-small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setConfirmingId(media.id);
-                                                }}
-                                                title={t('card.delete')}
-                                            >
-                                                🗑️
-                                            </button>
+                                            <div className="action-buttons">
+                                                {isRetryable(media.status) && (
+                                                    <button
+                                                        type="button"
+                                                        className="retry-btn-small"
+                                                        onClick={(e) => handleRetry(media.id, e)}
+                                                        title={t('card.retry')}
+                                                    >
+                                                        🔄
+                                                    </button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    className="delete-btn-small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setConfirmingId(media.id);
+                                                    }}
+                                                    title={t('card.delete')}
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

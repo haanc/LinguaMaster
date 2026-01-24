@@ -29,10 +29,12 @@
   "card": {
     "ready": "READY",
     "error": "ERROR",
+    "interrupted": "INTERRUPTED",
     "cloud": "CLOUD",
     "processing": "PROCESSING",
     "delete": "Delete Video",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "retry": "Retry"
   },
   "sidebar": {
     "transcript": "Transcript",

@@ -338,6 +338,63 @@ def retranscribe_media(
     return media
 
 
+@router.post("/{media_id}/retry", response_model=MediaSource)
+def retry_interrupted_media(
+    media_id: UUID,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session),
+    owner_id: str = Depends(get_current_owner),
+):
+    """
+    Retry processing for an interrupted media.
+
+    This handles media that was interrupted during download, transcription, or translation.
+    It will restart the entire processing pipeline from the beginning.
+    """
+    media = session.get(MediaSource, media_id)
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
+
+    # Authorization check
+    if media.owner_id != owner_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Only allow retry for interrupted or error status
+    if media.status not in ["interrupted", "error"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Media is not in a retryable state (current: {media.status})"
+        )
+
+    # Must have a source URL to retry
+    if not media.source_url:
+        raise HTTPException(
+            status_code=400,
+            detail="No source URL available for retry. Please delete and re-add the video."
+        )
+
+    # Clear existing segments (start fresh)
+    existing_segments = session.exec(
+        select(SubtitleSegment).where(SubtitleSegment.media_id == media_id)
+    ).all()
+    for seg in existing_segments:
+        session.delete(seg)
+
+    # Reset media status
+    media.status = "downloading"
+    media.progress = 0
+    media.progress_message = "Retrying..."
+    media.error_message = None
+    session.add(media)
+    session.commit()
+    session.refresh(media)
+
+    # Restart the full processing pipeline
+    background_tasks.add_task(background_download_and_process, media.source_url, str(media.id))
+
+    return media
+
+
 @router.delete("/{media_id}")
 def delete_media(
     media_id: UUID,

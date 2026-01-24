@@ -29,10 +29,12 @@
   "card": {
     "ready": "就绪",
     "error": "错误",
+    "interrupted": "已中断",
     "cloud": "云端",
     "processing": "处理中",
     "delete": "删除视频",
-    "confirm": "确认"
+    "confirm": "确认",
+    "retry": "重试"
   },
   "sidebar": {
     "transcript": "字幕",

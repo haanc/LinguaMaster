@@ -29,10 +29,12 @@
   "card": {
     "ready": "準備完了",
     "error": "エラー",
+    "interrupted": "中断",
     "cloud": "クラウド",
     "processing": "処理中",
     "delete": "動画を削除",
-    "confirm": "確認"
+    "confirm": "確認",
+    "retry": "再試行"
   },
   "sidebar": {
     "transcript": "字幕",

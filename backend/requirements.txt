@@ -23,3 +23,6 @@ langchain-ollama>=0.1.0        # Ollama local LLM support
 # faster-whisper              # CPU-only (uses int8 quantization)
 # faster-whisper[gpu]         # NVIDIA GPU with CUDA support
 faster-whisper
+
+# Security
+slowapi                        # Rate limiting for FastAPI

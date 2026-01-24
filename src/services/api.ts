@@ -123,6 +123,11 @@ export const api = {
         return response.data;
     },
 
+    retryMedia: async (mediaId: string): Promise<MediaSource> => {
+        const response = await axios.post(`${API_BASE_URL}/media/${mediaId}/retry`);
+        return response.data;
+    },
+
     listSegments: async (mediaId: string): Promise<SubtitleSegment[]> => {
         const response = await axios.get(`${API_BASE_URL}/media/${mediaId}/segments`);
         return response.data;
