@@ -9,6 +9,7 @@ export type MediaStatus =
   | 'transcribing'
   | 'ready'
   | 'error'
+  | 'interrupted'
   | 'cloud_only';
 
 export interface MediaSource {
