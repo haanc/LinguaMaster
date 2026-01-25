@@ -1,0 +1,226 @@
+.feature-gate-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  text-align: center;
+  min-height: 120px;
+}
+
+.feature-gate-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.feature-gate-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.feature-gate-content p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.feature-gate-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.feature-gate-actions .btn-primary {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feature-gate-actions .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .feature-gate-prompt {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
+  }
+
+  .feature-gate-content h4 {
+    color: #f1f5f9;
+  }
+
+  .feature-gate-content p {
+    color: #94a3b8;
+  }
+}
+
+/* Credit display component */
+.credit-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.credit-display-icon {
+  font-size: 16px;
+}
+
+.credit-display-amount {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.credit-display-limit {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.credit-display.low-credits .credit-display-amount {
+  color: #ef4444;
+}
+
+.credit-display.pro-badge {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.credit-display.pro-badge .credit-display-amount,
+.credit-display.pro-badge .credit-display-limit {
+  color: white;
+}
+
+/* Upgrade banner */
+.upgrade-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.upgrade-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.upgrade-banner-icon {
+  font-size: 24px;
+}
+
+.upgrade-banner-text h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.upgrade-banner-text p {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #a16207;
+}
+
+.upgrade-banner .btn-upgrade {
+  padding: 6px 16px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.upgrade-banner .btn-upgrade:hover {
+  background: #d97706;
+}
+
+/* Low credits warning */
+.low-credits-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.low-credits-warning-icon {
+  font-size: 16px;
+}
+
+/* Pro badge */
+.pro-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+}
+
+/* Dark mode for credit display (for dark-themed apps) */
+.dark .credit-display,
+.credit-display[data-theme="dark"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .credit-display-amount,
+.credit-display[data-theme="dark"] .credit-display-amount {
+  color: #f1f5f9;
+}
+
+/* Header credit display - compact in dark theme */
+.auth-controls .credit-display {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-controls .credit-display:hover {
+  background: rgba(99, 102, 241, 0.25);
+  transform: scale(1.02);
+}
+
+.auth-controls .credit-display-amount {
+  color: #a5b4fc;
+}
+
+.auth-controls .credit-display.low-credits {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.auth-controls .credit-display.low-credits .credit-display-amount {
+  color: #fca5a5;
+}

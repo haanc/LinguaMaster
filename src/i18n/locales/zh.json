@@ -133,7 +133,10 @@
     "syncComplete": "同步完成！",
     "syncFailed": "同步失败: {{error}}",
     "videoError": "视频错误: {{error}}",
-    "loggedIn": "登录成功！"
+    "loggedIn": "登录成功！",
+    "signInForAI": "请登录以使用 AI 翻译（消耗积分）",
+    "insufficientCredits": "积分不足，请升级或充值",
+    "configureLLMOrSignIn": "未配置 AI。请在设置中配置 LLM 或登录使用云端 AI"
   },
   "deps": {
     "title": "首次设置",
@@ -154,5 +157,22 @@
     "error": "后端启动失败",
     "retry": "重试",
     "initializing": "初始化中..."
+  },
+  "credits": {
+    "balance": "额度",
+    "lowWarning": "额度即将用完",
+    "costTooltip": "{{action}} 消耗 {{cost}} 额度"
+  },
+  "upgrade": {
+    "bannerTitle": "升级到 Pro",
+    "bannerSubtitle": "每月 10,000 额度，解锁全部功能",
+    "upgradeNow": "立即升级",
+    "title": "升级 Pro",
+    "monthlyPrice": "$9.99/月",
+    "yearlyPrice": "$99/年",
+    "feature1": "每月 10,000 额度",
+    "feature2": "优先客服支持",
+    "feature3": "抢先体验新功能",
+    "feature4": "多设备云同步"
   }
 }

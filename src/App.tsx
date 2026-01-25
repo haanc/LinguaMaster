@@ -16,6 +16,7 @@ import { DepsSetup } from './components/DepsSetup'
 import { LLMSettingsModal } from './components/Settings/LLMSettingsModal'
 import { ToastProvider } from './contexts/ToastContext'
 import { api } from './services/api'
+import { edgeApi, isUsingOwnApiKey } from './services/edgeApi'
 import { llmConfigStorage } from './services/llmConfigStorage'
 import appIcon from './assets/icon.png'
 import './App.css'
@@ -28,8 +29,10 @@ import LibraryGrid from './components/LibraryGrid'
 
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { AuthModal } from './components/Auth/AuthModal'
-import { getUser, signOut, supabase } from './services/supabase'
+import { getUser, signOut, supabase, getSessionWithTimeout } from './services/supabase'
 import { User } from '@supabase/supabase-js'
+import { useUser } from './contexts/UserContext'
+import CreditDisplay from './components/CreditDisplay'
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
   constructor(props: any) {
@@ -99,9 +102,53 @@ function App() {
   const [_depsReady, setDepsReady] = useState(false);
   const [backendReady, setBackendReady] = useState(false);
   const [isPlayerFullscreen, setIsPlayerFullscreen] = useState(false);
+  const [localTranslations, setLocalTranslations] = useState<Record<string, string>>({});
 
   const { refetch } = useMediaList()
   const { data: segments = [], refetch: refetchSegments } = useSubtitleSegments(currentMedia?.id || null)
+
+  // Translation cache key for localStorage
+  const getTranslationCacheKey = (mediaId: string, lang: string) =>
+    `translations_${mediaId}_${lang}`;
+
+  // Load cached translations when media or target language changes
+  useEffect(() => {
+    if (currentMedia?.id && targetLanguage) {
+      const cacheKey = getTranslationCacheKey(currentMedia.id, targetLanguage);
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsedCache = JSON.parse(cached);
+          console.log(`Loaded ${Object.keys(parsedCache).length} cached translations for ${targetLanguage}`);
+          setLocalTranslations(parsedCache);
+        } catch (e) {
+          console.error('Failed to parse cached translations:', e);
+          localStorage.removeItem(cacheKey);
+        }
+      } else {
+        // No cache for this language, clear local translations
+        setLocalTranslations({});
+      }
+    }
+  }, [currentMedia?.id, targetLanguage]);
+
+  // Save translations to localStorage when they change
+  useEffect(() => {
+    if (currentMedia?.id && targetLanguage && Object.keys(localTranslations).length > 0) {
+      const cacheKey = getTranslationCacheKey(currentMedia.id, targetLanguage);
+      localStorage.setItem(cacheKey, JSON.stringify(localTranslations));
+      console.log(`Saved ${Object.keys(localTranslations).length} translations to cache`);
+    }
+  }, [localTranslations, currentMedia?.id, targetLanguage]);
+
+  // Merge local translations with segments from hook
+  const mergedSegments = useMemo(() => {
+    if (Object.keys(localTranslations).length === 0) return segments;
+    return segments.map(seg => ({
+      ...seg,
+      translation: localTranslations[seg.id] || seg.translation
+    }));
+  }, [segments, localTranslations]);
 
   // Fetch review count on mount and when vocab is updated
   useEffect(() => {
@@ -185,30 +232,79 @@ function App() {
 
   // Handle translation toggle - trigger translation when enabled
   const handleShowTranslationChange = async (show: boolean) => {
-    console.log('handleShowTranslationChange called:', { show, mediaId: currentMedia?.id, segmentsCount: segments.length });
+    console.log('handleShowTranslationChange called:', { show, mediaId: currentMedia?.id, segmentsCount: mergedSegments.length });
     setShowTranslation(show);
 
     // If enabling translation and we have segments without translations
-    if (show && currentMedia?.id && segments.length > 0) {
-      // Check if any segments need translation
-      const needsTranslation = segments.filter(s => !s.translation);
+    if (show && currentMedia?.id && mergedSegments.length > 0) {
+      // Check if any segments need translation (use mergedSegments to account for local translations)
+      const needsTranslation = mergedSegments.filter(s => !s.translation);
       console.log('Segments needing translation:', needsTranslation.length);
       if (needsTranslation.length > 0) {
         setIsTranslating(true);
         setMessage(t('status.translating', { count: needsTranslation.length }));
 
         try {
-          await api.translateSegments(
-            currentMedia.id,
-            needsTranslation.map(s => s.id),
-            targetLanguage
-          );
+          // Check if user has configured their own LLM
+          if (isUsingOwnApiKey()) {
+            // Use local backend (free, no credits)
+            await api.translateSegments(
+              currentMedia.id,
+              needsTranslation.map(s => s.id),
+              targetLanguage
+            );
+          } else if (user) {
+            // Use Edge Function with credits
+            const texts = needsTranslation.map(s => s.text);
+            const result = await edgeApi.translateBatch(
+              texts,
+              targetLanguage,
+              50, // batch size - 50 segments per batch to avoid Edge Function timeout
+              (completed, total) => {
+                setMessage(t('status.translating', { count: `${completed}/${total}` }));
+              }
+            );
+
+            console.log('Edge translations received:', {
+              count: Object.keys(result.translations).length,
+              creditsUsed: result.credits_used,
+              creditsRemaining: result.credits_remaining
+            });
+
+            // Update local translations cache (map segment id to translation)
+            const newTranslations: Record<string, string> = {};
+            needsTranslation.forEach((seg, idx) => {
+              if (result.translations[idx]) {
+                newTranslations[seg.id] = result.translations[idx];
+              }
+            });
+            setLocalTranslations(prev => ({ ...prev, ...newTranslations }));
+
+            // Skip refetchSegments since we updated locally
+            setMessage(t('status.translationComplete'));
+            setIsTranslating(false);
+            return;
+          } else {
+            // Guest user - show auth prompt
+            setMessage(t('status.signInForAI'));
+            setIsAuthModalOpen(true);
+            setIsTranslating(false);
+            return;
+          }
           // Refetch segments to get translations - await to ensure data is refreshed
           await refetchSegments();
           setMessage(t('status.translationComplete'));
         } catch (error: any) {
           console.error('Translation error:', error);
-          setMessage(t('status.translationFailed', { error: error.message }));
+          // Check if it's an insufficient credits error
+          if (error.name === 'InsufficientCreditsError') {
+            setMessage(t('status.insufficientCredits'));
+          } else if (error.message?.includes('No LLM configured')) {
+            // No local LLM and not logged in
+            setMessage(t('status.configureLLMOrSignIn'));
+          } else {
+            setMessage(t('status.translationFailed', { error: error.message }));
+          }
         } finally {
           setIsTranslating(false);
         }
@@ -220,23 +316,82 @@ function App() {
   const handleTargetLanguageChange = async (lang: string) => {
     setTargetLanguage(lang);
 
-    // If translation is currently shown and we have segments, re-translate
+    // If translation is currently shown and we have segments, check cache first
     if (showTranslation && currentMedia?.id && segments.length > 0) {
+      // Check localStorage cache first
+      const cacheKey = getTranslationCacheKey(currentMedia.id, lang);
+      const cached = localStorage.getItem(cacheKey);
+
+      if (cached) {
+        try {
+          const parsedCache = JSON.parse(cached);
+          const cachedCount = Object.keys(parsedCache).length;
+          console.log(`Found ${cachedCount} cached translations for ${lang}, skipping API call`);
+
+          // If we have enough cached translations (at least 80% of segments), use cache
+          if (cachedCount >= segments.length * 0.8) {
+            setLocalTranslations(parsedCache);
+            setMessage(t('status.translationComplete'));
+            return; // Skip translation API call
+          }
+          // Partial cache - load what we have, then translate missing ones
+          setLocalTranslations(parsedCache);
+        } catch (e) {
+          console.error('Failed to parse cached translations:', e);
+          localStorage.removeItem(cacheKey);
+        }
+      }
+
       setIsTranslating(true);
       setMessage(t('status.translatingTo', { lang }));
 
       try {
-        await api.translateSegments(
-          currentMedia.id,
-          segments.map(s => s.id),
-          lang
-        );
-        // Await refetch to ensure UI updates with new translations
-        await refetchSegments();
+        // Check if user has configured their own LLM
+        if (isUsingOwnApiKey()) {
+          // Use local backend (free, no credits)
+          await api.translateSegments(
+            currentMedia.id,
+            segments.map(s => s.id),
+            lang
+          );
+          // Await refetch to ensure UI updates with new translations
+          await refetchSegments();
+        } else if (user) {
+          // Use Edge Function with credits
+          const texts = segments.map(s => s.text);
+          const result = await edgeApi.translateBatch(
+            texts,
+            lang,
+            50, // batch size
+            (completed, total) => {
+              setMessage(t('status.translating', { count: `${completed}/${total}` }));
+            }
+          );
+          console.log('Edge translations received, credits used:', result.credits_used);
+
+          // Update local translations cache (map segment id to translation)
+          const newTranslations: Record<string, string> = {};
+          segments.forEach((seg, idx) => {
+            if (result.translations[idx]) {
+              newTranslations[seg.id] = result.translations[idx];
+            }
+          });
+          setLocalTranslations(newTranslations); // Replace all translations with new language
+        } else {
+          // Guest user - show auth prompt
+          setMessage(t('status.signInForAI'));
+          setIsAuthModalOpen(true);
+          setIsTranslating(false);
+          return;
+        }
         setMessage(t('status.translationComplete'));
       } catch (error: any) {
         console.error('Translation error:', error);
-        setMessage(t('status.translationFailed', { error: error.message }));
+        if (error.name === 'InsufficientCreditsError') {
+          setMessage(t('status.insufficientCredits'));
+        } else {
+          setMessage(t('status.translationFailed', { error: error.message }));
+        }
       } finally {
         setIsTranslating(false);
       }
@@ -245,19 +400,31 @@ function App() {
 
   // Check auth status on mount
   useEffect(() => {
-    // Check initial auth state
-    getUser().then(u => {
-      setUser(u);
-      if (u) {
-        localStorage.setItem('userRole', 'user');
-        localStorage.setItem('userId', u.id);
-      } else {
-        localStorage.setItem('userRole', 'guest');
-        localStorage.removeItem('userId'); // Ensure clean guest state
-      }
-    });
+    // Check initial auth state using getSessionWithTimeout (handles SDK hang issue)
+    const initAuth = async () => {
+      const { session, error } = await getSessionWithTimeout(3000);
 
-    const unsubscribe = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth init:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        error: error?.message
+      });
+
+      if (session?.user) {
+        setUser(session.user);
+        localStorage.setItem('userRole', 'user');
+        localStorage.setItem('userId', session.user.id);
+      } else {
+        setUser(null);
+        localStorage.setItem('userRole', 'guest');
+        localStorage.removeItem('userId');
+      }
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.id);
       setUser(session?.user ?? null);
       if (session?.user) {
         localStorage.setItem('userRole', 'user');
@@ -269,19 +436,42 @@ function App() {
       refetch(); // Refetch whenever auth state changes to update the view
     });
 
-    return () => unsubscribe.data?.subscription.unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
-    await signOut();
-    setUser(null);
-    localStorage.setItem('userRole', 'guest');
-    localStorage.removeItem('userId');
-    setMessage(t('status.loggedOut'));
-    setView('library'); // Reset view
-    setVideoPath(null); // Stop playback
-    setCurrentMedia(null);
-    refetch(); // Refresh list to show guest data (or empty)
+    console.log('handleLogout called');
+    try {
+      const { error } = await signOut();
+      console.log('signOut result:', { error });
+      if (error) {
+        console.error('Logout error:', error);
+        // Still clear local state even if server signOut failed
+      }
+      // Always clear local state
+      setUser(null);
+      localStorage.setItem('userRole', 'guest');
+      localStorage.removeItem('userId');
+      // Clear both old and new storage keys
+      localStorage.removeItem('linguamaster-auth');
+      localStorage.removeItem('sb-flghyjbqpalhxjznfxcn-auth-token');
+      setMessage(t('status.loggedOut'));
+      setView('library');
+      setVideoPath(null);
+      setCurrentMedia(null);
+      refetch();
+    } catch (e) {
+      console.error('Logout exception:', e);
+      // Force clear local state
+      setUser(null);
+      localStorage.setItem('userRole', 'guest');
+      localStorage.removeItem('userId');
+      // Clear both old and new storage keys
+      localStorage.removeItem('linguamaster-auth');
+      localStorage.removeItem('sb-flghyjbqpalhxjznfxcn-auth-token');
+      setMessage(t('status.loggedOut'));
+      refetch();
+    }
   };
 
   // Sync videoPath with View
@@ -537,8 +727,8 @@ function App() {
 
 
   const activeSegment = useMemo(() => {
-    return segments.find(s => currentTime >= s.start_time && currentTime <= s.end_time);
-  }, [segments, currentTime]);
+    return mergedSegments.find(s => currentTime >= s.start_time && currentTime <= s.end_time);
+  }, [mergedSegments, currentTime]);
 
   const handleBackToLibrary = () => {
     setVideoPath(null);
@@ -671,6 +861,7 @@ function App() {
             {/* Auth Controls */}
             {user ? (
               <div className="auth-controls">
+                <CreditDisplay compact />
                 <div className="user-badge">
                   {user.email}
                 </div>
@@ -690,7 +881,9 @@ function App() {
                 >
                   🔄 Sync
                 </button>
-                <button className="secondary-btn" onClick={handleLogout}>{t('nav.login') === 'Login' ? 'Logout' : '退出'}</button>
+                <button className="secondary-btn" onClick={handleLogout}>
+                  {t('nav.login') === 'Login' ? 'Logout' : '退出'}
+                </button>
               </div>
             ) : (
               <button
@@ -804,7 +997,7 @@ function App() {
           >
             <ErrorBoundary>
               <SubtitleSidebar
-                segments={segments || []}
+                segments={mergedSegments || []}
                 currentTime={currentTime}
                 onSeek={handleSeek}
                 targetLanguage={targetLanguage}
@@ -825,8 +1018,9 @@ function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={() => {
-          getUser().then(setUser);
+          // Auth state change listener will handle user state update
           setMessage(t('status.loggedIn'));
+          setIsAuthModalOpen(false);
         }}
       />
 

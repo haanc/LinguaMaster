@@ -26,3 +26,9 @@ faster-whisper
 
 # Security
 slowapi                        # Rate limiting for FastAPI
+
+# Supabase (cloud auth and data)
+supabase>=2.0.0               # Supabase Python client
+
+# Export (Word document generation)
+python-docx>=0.8.11           # Word document generation

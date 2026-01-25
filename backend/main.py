@@ -21,6 +21,8 @@ from database import create_db_and_tables, engine
 
 # Import route modules
 from routes import media_router, vocab_router, ai_router, streaming_router
+from routes.user import router as user_router
+from routes.webhooks import router as webhooks_router
 
 # For interrupted task recovery
 from sqlmodel import Session, select
@@ -73,6 +75,12 @@ app.include_router(vocab_router)
 
 # AI routes (/ai/*)
 app.include_router(ai_router)
+
+# User routes (/user/*)
+app.include_router(user_router)
+
+# Webhook routes (/webhooks/*)
+app.include_router(webhooks_router)
 
 
 # --- Application Events ---

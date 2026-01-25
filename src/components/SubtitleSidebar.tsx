@@ -2,6 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { SubtitleSegment, api, ChatMessage } from '../services/api'; // Import api and types
+import { edgeApi, isUsingOwnApiKey } from '../services/edgeApi';
+import { useUser } from '../contexts/UserContext';
 import { LANGUAGE_NAMES } from '../i18n/languages';
 import './SubtitleSidebar.css';
 
@@ -37,6 +39,7 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
     isCompact = false
 }) => {
     const { t } = useTranslation();
+    const { isAuthenticated } = useUser();
     const parentRef = useRef<HTMLDivElement>(null);
 
     // State
@@ -139,11 +142,43 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
         setChatMessages([]); // Reset chat on new explanation
 
         try {
-            const result = await api.explainContext(text, targetLanguage);
+            let result;
+
+            // Check if user has configured their own LLM
+            if (isUsingOwnApiKey()) {
+                // Use local backend (free, no credits)
+                result = await api.explainContext(text, targetLanguage);
+            } else if (isAuthenticated) {
+                // Use Edge Function with credits
+                const response = await edgeApi.explain(text, '', targetLanguage);
+                // Parse Edge response - it returns JSON as a string in response.result
+                try {
+                    // Try to parse the result as JSON
+                    const resultText = response.result || '';
+                    // Remove markdown code blocks if present
+                    const cleanJson = resultText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                    result = JSON.parse(cleanJson);
+                } catch (parseError) {
+                    console.error('Failed to parse explain response:', parseError);
+                    // Fallback: create a simple result from the text
+                    result = {
+                        summary: response.result || 'No explanation available',
+                        grammar_notes: '',
+                        cultural_notes: ''
+                    };
+                }
+            } else {
+                throw new Error('Please sign in or configure local LLM');
+            }
+
             setTutorExplanation(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setTutorError("Failed to analyze context.");
+            if (err.message?.includes('sign in') || err.message?.includes('authenticate')) {
+                setTutorError("请登录或配置本地 LLM");
+            } else {
+                setTutorError("分析失败，请重试");
+            }
         } finally {
             setTutorLoading(false);
         }
@@ -156,15 +191,34 @@ const SubtitleSidebar: React.FC<SubtitleSidebarProps> = ({
         setIsChatLoading(true);
 
         try {
-            // Pass the original text as context
-            const response = await api.chatWithTutor(chatMessages, message, targetLanguage, tutorOriginalText || undefined);
+            let aiContent: string;
 
-            // Backend returns { content: string, role: string }
-            const aiMessage: ChatMessage = { role: 'assistant', content: response.content };
+            // Check if user has configured their own LLM
+            if (isUsingOwnApiKey()) {
+                // Use local backend (free, no credits)
+                const response = await api.chatWithTutor(chatMessages, message, targetLanguage, tutorOriginalText || undefined);
+                aiContent = response.content;
+            } else if (isAuthenticated) {
+                // Use Edge Function with credits
+                // Build context message if we have tutorOriginalText
+                const contextMessages = tutorOriginalText
+                    ? [{ role: 'system', content: `Context: User is learning from this sentence: "${tutorOriginalText}".` }, ...chatMessages.map(m => ({ role: m.role, content: m.content }))]
+                    : chatMessages.map(m => ({ role: m.role, content: m.content }));
+                const response = await edgeApi.chat(contextMessages, message, targetLanguage);
+                aiContent = response.result || "No response";
+            } else {
+                throw new Error('Please sign in or configure local LLM');
+            }
+
+            const aiMessage: ChatMessage = { role: 'assistant', content: aiContent };
             setChatMessages(prev => [...prev, aiMessage]);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setChatMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I encountered an error." }]);
+            if (err.message?.includes('sign in') || err.message?.includes('authenticate')) {
+                setChatMessages(prev => [...prev, { role: 'assistant', content: "请登录或配置本地 LLM" }]);
+            } else {
+                setChatMessages(prev => [...prev, { role: 'assistant', content: "抱歉，出现了错误。请重试。" }]);
+            }
         } finally {
             setIsChatLoading(false);
         }

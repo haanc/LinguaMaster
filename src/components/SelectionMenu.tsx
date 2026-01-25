@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { api, VocabularyItem } from '../services/api';
+import { edgeApi, isUsingOwnApiKey } from '../services/edgeApi';
+import { useUser } from '../contexts/UserContext';
 import './SelectionMenu.css';
 
 interface SelectionMenuProps {
@@ -13,6 +15,7 @@ interface SelectionMenuProps {
 }
 
 const SelectionMenu: React.FC<SelectionMenuProps> = ({ selectedText, context, targetLanguage, position, onClose }) => {
+    const { isAuthenticated } = useUser();
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<VocabularyItem | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -28,11 +31,53 @@ const SelectionMenu: React.FC<SelectionMenuProps> = ({ selectedText, context, ta
         setLoading(true);
         setError(null);
         try {
-            const result = await api.lookupWord(selectedText, context, targetLanguage);
+            let result: VocabularyItem;
+
+            // Check if user has configured their own LLM
+            if (isUsingOwnApiKey()) {
+                // Use local backend (free, no credits)
+                result = await api.lookupWord(selectedText, context, targetLanguage);
+            } else if (isAuthenticated) {
+                // Use Edge Function with credits
+                const response = await edgeApi.lookupWord(selectedText, context, targetLanguage);
+                // Parse Edge response - it returns JSON as a string in response.result
+                try {
+                    const resultText = response.result || '';
+                    // Remove markdown code blocks if present
+                    const cleanJson = resultText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                    const parsed = JSON.parse(cleanJson);
+                    result = {
+                        word: selectedText,
+                        translation: parsed.translation || '',
+                        definition: parsed.definition || '',
+                        pronunciation: parsed.pronunciation || '',
+                        example_sentence: parsed.example || '',
+                        context_sentence: context,
+                    };
+                } catch (parseError) {
+                    console.error('Failed to parse word lookup response:', parseError);
+                    // Fallback: use the raw text as translation
+                    result = {
+                        word: selectedText,
+                        translation: response.result || 'No translation available',
+                        definition: '',
+                        pronunciation: '',
+                        example_sentence: '',
+                        context_sentence: context,
+                    };
+                }
+            } else {
+                throw new Error('Please sign in or configure local LLM');
+            }
+
             setData(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError("Failed to load definition.");
+            if (err.message?.includes('sign in') || err.message?.includes('authenticate')) {
+                setError("请登录或配置本地 LLM");
+            } else {
+                setError("查询失败");
+            }
         } finally {
             setLoading(false);
         }

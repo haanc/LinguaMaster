@@ -203,6 +203,24 @@ The installer will be created in the `release/` directory.
 
 ---
 
+### Changelog
+
+#### v0.2.0 (2026-01-24)
+
+**New Features:**
+- **Interrupted Task Recovery** - Automatically detect and reset tasks stuck in processing state when app restarts. Users can retry via 🔄 button.
+
+**Security Improvements:**
+- **SSRF Protection** - URL whitelist validation (YouTube, Bilibili, Vimeo, Dailymotion only)
+- **API Rate Limiting** - Prevent abuse with per-endpoint limits
+
+**Dependency Upgrades:**
+- Electron 30 → 40
+- Vite 5 → 7
+- electron-builder 24 → 26
+
+---
+
 <a name="中文"></a>
 
 ## 🇨🇳 中文
